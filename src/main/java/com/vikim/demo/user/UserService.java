@@ -20,9 +20,11 @@ public class UserService {
     }
 
 
-    public List<User> findAll(){
+    public List<UserResponse> findAll(){
 
-        return userMapper.findAll();
+        return userMapper.findAll().stream()
+                .map(UserResponse::from)
+                .toList();
 
     }
 
