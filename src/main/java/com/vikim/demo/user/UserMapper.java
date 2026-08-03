@@ -12,7 +12,7 @@ public interface UserMapper {
 
 
     @Select("""
-        select id, username, created_at
+        select id, username, email, created_at
         from users
     """)
     List<User> findAll();
