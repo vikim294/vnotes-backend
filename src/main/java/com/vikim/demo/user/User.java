@@ -1,4 +1,4 @@
-package com.vikim.demo.entity;
+package com.vikim.demo.user;
 
 import java.time.LocalDateTime;
 

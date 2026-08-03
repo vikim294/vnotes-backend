@@ -1,8 +1,6 @@
-package com.vikim.demo.controller;
+package com.vikim.demo.user;
 
 
-import com.vikim.demo.entity.User;
-import com.vikim.demo.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

@@ -1,8 +1,6 @@
-package com.vikim.demo.service;
+package com.vikim.demo.user;
 
 
-import com.vikim.demo.entity.User;
-import com.vikim.demo.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

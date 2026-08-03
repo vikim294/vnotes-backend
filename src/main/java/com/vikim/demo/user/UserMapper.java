@@ -1,7 +1,6 @@
-package com.vikim.demo.mapper;
+package com.vikim.demo.user;
 
 
-import com.vikim.demo.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
