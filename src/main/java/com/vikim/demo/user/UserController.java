@@ -1,6 +1,8 @@
 package com.vikim.demo.user;
 
 
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,9 +26,12 @@ public class UserController {
 
     @GetMapping
     public List<UserResponse> findAll(){
-
         return userService.findAll();
-
     }
 
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void registerAccount(@Valid @RequestBody RegisterAccountRequest request) {
+        userService.registerAccount(request);
+    }
 }
