@@ -1,9 +1,9 @@
 package com.vikim.demo.user;
 
 
-import org.springframework.http.HttpStatus;
+import com.vikim.demo.common.BusinessException;
+import com.vikim.demo.common.ErrorCode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +27,7 @@ public class UserService {
     public void registerAccount(RegisterAccountRequest request) {
         Optional<User> user = userMapper.findByEmail(request.email());
         if (user.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "用户邮箱已存在");
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         userMapper.registerAccount(request.username(), request.password(), request.email());
