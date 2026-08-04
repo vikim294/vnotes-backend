@@ -1,4 +1,4 @@
-package com.vikim.demo.common;
+package com.vikim.demo.user;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
