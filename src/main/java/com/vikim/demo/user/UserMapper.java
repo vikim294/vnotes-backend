@@ -19,10 +19,10 @@ public interface UserMapper {
     List<User> findAll();
 
     @Insert("""
-        insert into users(username, password, email)
-        values(#{username}, #{password}, #{email})
+        insert into users(username, password_hash, email)
+        values(#{username}, #{passwordHash}, #{email})
     """)
-    int registerAccount(String username, String password, String email);
+    int registerAccount(String username, String passwordHash, String email);
 
     @Select("""
             select id, username

@@ -10,7 +10,7 @@ public class User {
 
     private String username;
 
-    private String password;
+    private String passwordHash;
     private String email;
 
     private LocalDateTime createdAt;
@@ -36,13 +36,13 @@ public class User {
     }
 
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public String getEmail() {

@@ -3,6 +3,7 @@ package com.vikim.demo.user;
 
 import com.vikim.demo.common.BusinessException;
 import com.vikim.demo.common.ErrorCode;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,9 +14,11 @@ import java.util.Optional;
 public class UserService {
 
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserMapper userMapper) {
+    public UserService(UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<UserResponse> findAll() {
@@ -30,6 +33,8 @@ public class UserService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        userMapper.registerAccount(request.username(), request.password(), request.email());
+        String passwordHash = passwordEncoder.encode(request.password());
+
+        userMapper.registerAccount(request.username(), passwordHash, request.email());
     }
 }
