@@ -11,6 +11,7 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "请求参数校验失败"
     ),
+
     EMAIL_ALREADY_EXISTS(
             20001,
             HttpStatus.CONFLICT,
@@ -21,6 +22,12 @@ public enum ErrorCode {
             20002,
             HttpStatus.CONFLICT,
             "数据冲突"
+    ),
+
+    INVALID_CREDENTIALS(
+            30001,
+            HttpStatus.UNAUTHORIZED,
+            "邮箱或密码错误"
     ),
 
     INTERNAL_ERROR(
