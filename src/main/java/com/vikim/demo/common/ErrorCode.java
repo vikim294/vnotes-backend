@@ -30,6 +30,18 @@ public enum ErrorCode {
             "邮箱或密码错误"
     ),
 
+    AUTHENTICATION_REQUIRED(
+            30002,
+            HttpStatus.UNAUTHORIZED,
+            "未登录或访问令牌无效"
+    ),
+
+    ACCESS_DENIED(
+            30003,
+            HttpStatus.FORBIDDEN,
+            "无权访问该资源"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
