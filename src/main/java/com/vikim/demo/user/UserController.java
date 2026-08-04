@@ -4,6 +4,7 @@ package com.vikim.demo.user;
 import com.vikim.demo.common.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,5 +35,12 @@ public class UserController {
     public ApiResponse<Void> registerAccount(@Valid @RequestBody RegisterAccountRequest request) {
         userService.registerAccount(request);
         return ApiResponse.success("注册成功");
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<String> me(
+            Authentication authentication
+    ) {
+        return ApiResponse.success(authentication.getName(), "获取当前用户信息成功");
     }
 }
