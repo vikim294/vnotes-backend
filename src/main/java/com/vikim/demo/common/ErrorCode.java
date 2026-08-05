@@ -42,6 +42,12 @@ public enum ErrorCode {
             "无权访问该资源"
     ),
 
+    DIRECTORY_NODE_NOT_FOUND(
+            40001,
+            HttpStatus.NOT_FOUND,
+            "目录节点不存在"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,

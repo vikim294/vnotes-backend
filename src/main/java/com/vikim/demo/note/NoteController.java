@@ -17,20 +17,34 @@ public class NoteController {
         this.noteService = noteService;
     }
 
-    @PostMapping("/directory/create")
+    @PostMapping("/directory")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<Void> createDirectoryNode(
+    public ApiResponse<Long> createDirectoryNode(
             Authentication authentication,
             @Valid @RequestBody CreateDirectoryNodeRequest request
     ) {
-        noteService.createDirectoryNode(Long.valueOf(authentication.getName()), request);
-        return ApiResponse.success("创建目录节点成功");
+        return ApiResponse.success(noteService.createDirectoryNode(getIdFromAuthentication(authentication), request), "创建目录节点成功");
     }
 
     @GetMapping("/directory")
     public ApiResponse<List<FetchDirectoryNodesResponse>> fetchAllDirectoryNodes(
             Authentication authentication
     ) {
-        return ApiResponse.success(noteService.fetchAllDirectoryNodes(Long.valueOf(authentication.getName())), "获取笔记目录成功");
+        return ApiResponse.success(noteService.fetchAllDirectoryNodes(getIdFromAuthentication(authentication)), "获取笔记目录成功");
+    }
+
+    @DeleteMapping("/directory/{id}")
+    public ApiResponse<Void> deleteDirectoryNode(
+            Authentication authentication,
+            @PathVariable("id") Long id
+    ) {
+        noteService.deleteDirectoryNode(id, getIdFromAuthentication(authentication));
+        return ApiResponse.success("删除目录节点成功");
+    }
+
+    private Long getIdFromAuthentication(
+            Authentication authentication
+    ) {
+        return Long.valueOf(authentication.getName());
     }
 }

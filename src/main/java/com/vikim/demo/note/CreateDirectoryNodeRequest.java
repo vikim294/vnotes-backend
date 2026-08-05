@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 public record CreateDirectoryNodeRequest(
+        Long parentId,
+
         @NotBlank(message = "标签不能为空")
         @Size(max = 255, message = "最多 255 字符")
         String label,

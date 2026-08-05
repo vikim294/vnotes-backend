@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 public record FetchDirectoryNodesResponse(
         Long id,
+        Long parentId,
         String label,
         BigDecimal x,
         BigDecimal y,

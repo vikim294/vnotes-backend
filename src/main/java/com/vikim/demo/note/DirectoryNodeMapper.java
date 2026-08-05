@@ -1,26 +1,62 @@
 package com.vikim.demo.note;
 
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper
 public interface DirectoryNodeMapper {
 
     @Insert("""
-            insert into directory_nodes(user_id, label, x, y)
-            values(#{user_id},#{label},#{x},#{y})
-            """)
-    int createDirectoryNode(@Param("user_id") Long userId, @Param("label") String label, @Param("x") BigDecimal x, @Param("y") BigDecimal y);
+            insert into directory_nodes(user_id, parent_id, label, x, y)
+            values(#{userId} ,#{parentId}, #{label}, #{x}, #{y})
+    """)
+    @Options(
+            useGeneratedKeys = true,
+            keyProperty = "id"
+    )
+    int createDirectoryNode(CreateDirectoryNodeMapperParam param);
 
     @Select("""
-            select id, label, x, y, created_at, updated_at
+            select id, parent_id, label, x, y, created_at, updated_at
             from directory_nodes dn
-            where dn.user_id = #{user_id}
-            """)
+            where dn.user_id = #{user_id} and dn.deleted_at is null
+    """)
     List<FetchDirectoryNodesResponse> fetchAllDirectoryNodes(@Param("user_id") Long userId);
+
+    @Select("""
+        select exists(
+            select 1
+            from directory_nodes dn
+            where dn.user_id = #{user_id} and dn.id = #{id} and dn.deleted_at is null
+        )
+    """)
+    boolean hasDirectoryNode(@Param("user_id") Long userId, @Param("id") Long id);
+
+    @Update("""
+        with recursive subtree (id) as (
+            select id
+            from directory_nodes
+            where id = #{id}
+              and user_id = #{userId}
+              and deleted_at is null
+
+            union all
+
+            select child.id
+            from directory_nodes child
+            join subtree parent
+              on child.parent_id = parent.id
+            where child.user_id = #{userId}
+        )
+        update directory_nodes node
+        join subtree
+          on subtree.id = node.id
+        set node.deleted_at = current_timestamp(6)
+        where node.deleted_at is null
+        """)
+    int deleteDirectoryNode(
+            @Param("id") Long id,
+            @Param("userId") Long userId
+    );
 }
