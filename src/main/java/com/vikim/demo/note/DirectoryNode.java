@@ -1,0 +1,14 @@
+package com.vikim.demo.note;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+public class DirectoryNode {
+    private Long id;
+    private String label;
+    private Long userId;
+    private BigDecimal x;
+    private BigDecimal y;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
