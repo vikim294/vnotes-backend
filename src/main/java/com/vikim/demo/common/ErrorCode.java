@@ -52,6 +52,24 @@ public enum ErrorCode {
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "服务器内部错误"
+    ),
+
+    DIRECTORY_NODE_CREATED_FAILED(
+            50002,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "创建目录节点失败"
+    ),
+
+    INVALID_DIRECTORY_NODE_RELATION(
+            50003,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "非法目录节点关系"
+    ),
+
+    DIRECTORY_NODE_UPDATED_PARENT_FAILED(
+            50004,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "更新目录节点的父节点失败"
     );
 
     private final int code;

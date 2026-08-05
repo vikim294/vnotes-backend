@@ -13,7 +13,7 @@ import java.util.List;
 public class NoteController {
     private final NoteService noteService;
 
-    public NoteController(NoteService noteService){
+    public NoteController(NoteService noteService) {
         this.noteService = noteService;
     }
 
@@ -40,6 +40,14 @@ public class NoteController {
     ) {
         noteService.deleteDirectoryNode(id, getIdFromAuthentication(authentication));
         return ApiResponse.success("删除目录节点成功");
+    }
+
+    @PostMapping("/directory/batch")
+    public ApiResponse<BatchCreateDirectoryNodesResponse> batchCreateDirectoryNotes(
+            Authentication authentication,
+            @Valid @RequestBody BatchCreateDirectoryNodesRequest request
+    ) {
+        return ApiResponse.success(noteService.batchCreateDirectoryNotes(getIdFromAuthentication(authentication), request), "批量新增目录节点成功");
     }
 
     private Long getIdFromAuthentication(
