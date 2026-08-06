@@ -18,6 +18,8 @@ public class UpdateDirectoryNodeMapperParam {
 
     private BigDecimal y;
 
+    private boolean parentIdPresent;
+
     public UpdateDirectoryNodeMapperParam(Long userId, Long parentId, String label, BigDecimal x, BigDecimal y) {
         this.userId = userId;
         this.parentId = parentId;

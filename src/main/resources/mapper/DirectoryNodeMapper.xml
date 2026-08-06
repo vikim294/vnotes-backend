@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.vikim.demo.note.DirectoryNodeMapper">
+
+    <update id="updateDirectoryNode">
+        update directory_nodes
+
+        <set>
+            <if test="parentIdPresent">
+                parent_id = #{parentId},
+            </if>
+
+            label = #{label},
+            x = #{x},
+            y = #{y}
+        </set>
+
+        where id = #{id} and user_id = #{userId} and deleted_at is null
+    </update>
+
+    <select id="countActiveDirectoryNodesByIds" resultType="int">
+        select count(*)
+        from directory_nodes
+        where user_id = #{userId}
+            and deleted_at is null
+            and id in
+        <foreach collection="ids"
+                 item="id"
+                 open="("
+                 separator=","
+                 close=")">
+            #{id}
+        </foreach>
+    </select>
+
+
+</mapper>

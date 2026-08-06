@@ -42,12 +42,12 @@ public class NoteController {
         return ApiResponse.success("删除目录节点成功");
     }
 
-    @PostMapping("/directory/batch")
-    public ApiResponse<BatchCreateDirectoryNodesResponse> batchCreateDirectoryNotes(
+    @PatchMapping("/directory/batch")
+    public ApiResponse<BatchUpdateDirectoryNodesResponse> batchUpdateDirectoryNotes(
             Authentication authentication,
-            @Valid @RequestBody BatchCreateDirectoryNodesRequest request
+            @Valid @RequestBody BatchUpdateDirectoryNodesRequest request
     ) {
-        return ApiResponse.success(noteService.batchCreateDirectoryNotes(getIdFromAuthentication(authentication), request), "批量新增目录节点成功");
+        return ApiResponse.success(noteService.batchUpdateDirectoryNotes(getIdFromAuthentication(authentication), request), "批量更新目录节点成功");
     }
 
     private Long getIdFromAuthentication(

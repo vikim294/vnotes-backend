@@ -9,12 +9,8 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record BatchCreateDirectoryNodesDTO(
-        Long id,
         Long parentId,
 
-        // TODO
-        // 问题1: 嵌套的 DTO 上的校验（比如 @NotBlank），controller 上有 @Valid 时，会校验吗？
-        // 问题2：如果会校验，那么 UUID 的非空校验应该用什么？
         @NotNull(message = "节点 UUID 不能为空")
         UUID uuid,
         UUID parentUuid,

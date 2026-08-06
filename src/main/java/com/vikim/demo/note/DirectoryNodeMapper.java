@@ -3,6 +3,7 @@ package com.vikim.demo.note;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Mapper
 public interface DirectoryNodeMapper {
@@ -32,6 +33,8 @@ public interface DirectoryNodeMapper {
         )
     """)
     boolean hasDirectoryNode(@Param("user_id") Long userId, @Param("id") Long id);
+
+    int countActiveDirectoryNodesByIds(@Param("userId") Long userId, @Param("ids") Set<Long> ids);
 
     @Update("""
         with recursive subtree (id) as (
@@ -71,15 +74,5 @@ public interface DirectoryNodeMapper {
             @Param("parentId") Long parentId
     );
 
-    // TODO: 前端不传 parentId 的意思是保持旧值不变，传 null 才需要修改 parent_id
-    @Update("""
-            update directory_nodes
-            set
-                parent_id = #{parentId},
-                label = #{label},
-                x = #{x},
-                y = #{y}
-            where id = #{id} and user_id = #{userId} and deleted_at is null
-    """)
     int updateDirectoryNode(UpdateDirectoryNodeMapperParam param);
 }

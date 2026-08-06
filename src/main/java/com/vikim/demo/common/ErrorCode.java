@@ -48,6 +48,12 @@ public enum ErrorCode {
             "目录节点不存在"
     ),
 
+    DIRECTORY_NODE_PARENT_VALIDATION_FAILED(
+            40002,
+            HttpStatus.BAD_REQUEST,
+            "目录节点 parent id 校验失败"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -70,6 +76,12 @@ public enum ErrorCode {
             50004,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "更新目录节点的父节点失败"
+    ),
+
+    DIRECTORY_NODE_UPDATED_FAILED(
+            50005,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "更新目录节点失败"
     );
 
     private final int code;
