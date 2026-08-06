@@ -82,6 +82,12 @@ public enum ErrorCode {
             50005,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "更新目录节点失败"
+    ),
+
+    DIRECTORY_NODE_BATCH_DELETE_FAILED(
+            50006,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "批量删除目录节点失败"
     );
 
     private final int code;

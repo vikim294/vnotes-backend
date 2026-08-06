@@ -13,6 +13,10 @@ public record BatchUpdateDirectoryNodesRequest(
 
         @NotNull(message = "updated 不能为空")
         @Size(max = 1000, message = "一次最多更新 1000 个节点")
-        List<@Valid BatchUpdateDirectoryNodesDTO> updated
+        List<@Valid BatchUpdateDirectoryNodesDTO> updated,
+
+        @NotNull(message = "deletedNodeIds 不能为空")
+        @Size(max = 1000, message = "一次最多删除 1000 个节点")
+        List<@NotNull Long> deletedNodeIds
 ) {
 }

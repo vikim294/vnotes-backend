@@ -75,4 +75,9 @@ public interface DirectoryNodeMapper {
     );
 
     int updateDirectoryNode(UpdateDirectoryNodeMapperParam param);
+
+    int batchDeleteDirectoryNodes(
+            @Param("userId") Long userId,
+            @Param("ids") Set<Long> ids
+    );
 }

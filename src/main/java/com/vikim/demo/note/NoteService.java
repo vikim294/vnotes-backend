@@ -47,6 +47,7 @@ public class NoteService {
     ) {
         Map<UUID, Long> uuidToId = new HashMap<>();
         Set<Long> parentIdsToBeVerified = new HashSet<>();
+        Set<Long> deletedIdsToBeVerified = new HashSet<>(request.deletedNodeIds());
 
         // 遍历 added、updated 找出 parentId 不为 null 的
         Set<Long> parentIdsFromAdded = request.added().stream().filter(node -> node.parentId() != null)
@@ -61,6 +62,11 @@ public class NoteService {
         // 校验 parentId 都是用户自己的
         if(!parentIdsToBeVerified.isEmpty() && parentIdsToBeVerified.size() != directoryNodeMapper.countActiveDirectoryNodesByIds(userId, parentIdsToBeVerified)) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_PARENT_VALIDATION_FAILED);
+        }
+
+        // 校验 deletedNodeIds 都是用户自己的
+        if(!deletedIdsToBeVerified.isEmpty() && deletedIdsToBeVerified.size() != directoryNodeMapper.countActiveDirectoryNodesByIds(userId, deletedIdsToBeVerified)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
 
         // TODO 写数据库之前，还要做一些验证：同一批中 uuid 不能重复、parentUuid 必须出现在本批 added 中、parentUuid 不能等于自己的 uuid、新节点之间不能形成 A → B → A 这样的环
@@ -139,6 +145,17 @@ public class NoteService {
                 throw new BusinessException(
                         ErrorCode.DIRECTORY_NODE_NOT_FOUND
                 );
+            }
+        }
+
+        // 软删除 deletedNodeIds 节点
+        if(!deletedIdsToBeVerified.isEmpty()) {
+            int affectedRows = directoryNodeMapper.batchDeleteDirectoryNodes(userId, deletedIdsToBeVerified);
+            // 删除一个孤立节点 -> 二者相等
+            // 删除一个有后代的节点 -> affectedRows > size
+            // 所以这里的判断不能用 !=
+            if(affectedRows < deletedIdsToBeVerified.size()) {
+                throw new BusinessException(ErrorCode.DIRECTORY_NODE_BATCH_DELETE_FAILED);
             }
         }
 
