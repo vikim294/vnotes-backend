@@ -37,7 +37,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "target/vnotes.jar"
-          target: "/opt/vnotes"
+          target: "/opt/vnotes/incoming"
+          strip_components: 1
 
 
       - name: Restart service
@@ -47,4 +48,24 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            set -e
+
+            sudo mv \
+              /opt/vnotes/incoming/vnotes.jar \
+              /opt/vnotes/vnotes.jar
+
             sudo systemctl restart vnotes
+
+            for attempt in $(seq 1 12); do
+              if curl -fsS http://127.0.0.1:8080/health; then
+                echo "Health check passed"
+                exit 0
+              fi
+
+              echo "Waiting for application: ${attempt}/12"
+              sleep 5
+            done
+
+            sudo systemctl status vnotes --no-pager || true
+            sudo journalctl -u vnotes -n 100 --no-pager || true
+            exit 1

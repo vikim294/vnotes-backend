@@ -40,7 +40,10 @@ public class SecurityConfig {
                                 "/auth/login",
                                 "/users/register"
                         ).permitAll()
-
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/health"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
 
