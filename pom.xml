@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.vikim</groupId>
-    <artifactId>demo</artifactId>
+    <artifactId>vnotes</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>demo</name>
-    <description>demo</description>
+    <name>vnotes</name>
+    <description>vnotes</description>
     <url/>
     <licenses>
         <license/>
@@ -84,6 +84,8 @@
     </dependencies>
 
     <build>
+        <finalName>vnotes</finalName>
+
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
