@@ -28,11 +28,11 @@ public interface DirectoryNodeMapper {
     @Select("""
         select exists(
             select 1
-            from directory_nodes dn
-            where dn.user_id = #{user_id} and dn.id = #{id} and dn.deleted_at is null
+            from directory_nodes
+            where user_id = #{userId} and id = #{id} and node_type = #{nodeType} and deleted_at is null
         )
     """)
-    boolean hasDirectoryNode(@Param("user_id") Long userId, @Param("id") Long id);
+    boolean hasDirectoryNode(@Param("userId") Long userId, @Param("id") Long id, @Param("nodeType") NodeType nodeType);
 
     int countActiveDirectoryNodesByIds(@Param("userId") Long userId, @Param("ids") Set<Long> ids);
 

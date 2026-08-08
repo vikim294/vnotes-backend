@@ -11,13 +11,15 @@ import java.util.stream.Collectors;
 @Service
 public class NoteService {
     private final DirectoryNodeMapper directoryNodeMapper;
+    private final DetailNodeMapper detailNodeMapper;
 
-    public NoteService(DirectoryNodeMapper directoryNodeMapper) {
+    public NoteService(DirectoryNodeMapper directoryNodeMapper, DetailNodeMapper detailNodeMapper) {
         this.directoryNodeMapper = directoryNodeMapper;
+        this.detailNodeMapper = detailNodeMapper;
     }
 
     public Long createDirectoryNode(Long userId, CreateDirectoryNodeRequest request) {
-        if (request.parentId() != null && !directoryNodeMapper.hasDirectoryNode(userId, request.parentId())) {
+        if (request.parentId() != null && !directoryNodeMapper.hasDirectoryNode(userId, request.parentId(), NodeType.DIRECTORY)) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
         CreateDirectoryNodeMapperParam param = new CreateDirectoryNodeMapperParam(userId, request.label(), request.x(), request.y(), request.nodeType());
@@ -70,6 +72,7 @@ public class NoteService {
         }
 
         // TODO 写数据库之前，还要做一些验证：同一批中 uuid 不能重复、parentUuid 必须出现在本批 added 中、parentUuid 不能等于自己的 uuid、新节点之间不能形成 A → B → A 这样的环
+        // 如果目录节点是 DETAIL，则还要添加一些验证：DETAIL 节点不能有子目录节点
 
         // 新增节点、记录 uuidToId
         for (BatchCreateDirectoryNodesDTO addedNode : request.added()) {
@@ -160,5 +163,14 @@ public class NoteService {
         }
 
         return new BatchUpdateDirectoryNodesResponse(uuidToId);
+    }
+
+    public List<FetchDetailNodesResponse> fetchDetailNodesByDirectoryNodeId(Long userId, Long directoryNodeId) {
+        // 先校验用户是否拥有该 director node
+        if (!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        return detailNodeMapper.fetchDetailNodesByDirectoryNodeId(directoryNodeId);
     }
 }

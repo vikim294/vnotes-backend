@@ -17,6 +17,12 @@ public class NoteController {
         this.noteService = noteService;
     }
 
+    private Long getIdFromAuthentication(
+            Authentication authentication
+    ) {
+        return Long.valueOf(authentication.getName());
+    }
+
     @PostMapping("/directory")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Long> createDirectoryNode(
@@ -50,9 +56,13 @@ public class NoteController {
         return ApiResponse.success(noteService.batchUpdateDirectoryNotes(getIdFromAuthentication(authentication), request), "批量更新目录节点成功");
     }
 
-    private Long getIdFromAuthentication(
-            Authentication authentication
+    @GetMapping("/directory/{id}/detail-nodes")
+    public ApiResponse<List<FetchDetailNodesResponse>> fetchDetailNodesByDirectoryNodeId(
+            Authentication authentication,
+            @PathVariable("id") Long id
     ) {
-        return Long.valueOf(authentication.getName());
+        return ApiResponse.success(noteService.fetchDetailNodesByDirectoryNodeId(getIdFromAuthentication(authentication), id), "获取笔记详情成功");
     }
+
+
 }
