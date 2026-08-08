@@ -9,6 +9,7 @@ public record FetchDirectoryNodesResponse(
         String label,
         BigDecimal x,
         BigDecimal y,
+        NodeType nodeType,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

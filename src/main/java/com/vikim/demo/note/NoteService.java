@@ -20,7 +20,7 @@ public class NoteService {
         if (request.parentId() != null && !directoryNodeMapper.hasDirectoryNode(userId, request.parentId())) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
-        CreateDirectoryNodeMapperParam param = new CreateDirectoryNodeMapperParam(userId, request.label(), request.x(), request.y());
+        CreateDirectoryNodeMapperParam param = new CreateDirectoryNodeMapperParam(userId, request.label(), request.x(), request.y(), request.nodeType());
         if (request.parentId() != null) {
             param.setParentId(request.parentId());
         }
@@ -73,7 +73,7 @@ public class NoteService {
 
         // 新增节点、记录 uuidToId
         for (BatchCreateDirectoryNodesDTO addedNode : request.added()) {
-            CreateDirectoryNodeMapperParam param = new CreateDirectoryNodeMapperParam(userId, addedNode.label(), addedNode.x(), addedNode.y());
+            CreateDirectoryNodeMapperParam param = new CreateDirectoryNodeMapperParam(userId, addedNode.label(), addedNode.x(), addedNode.y(), addedNode.nodeType());
             // 旧节点新增的子节点，parentId 是有值的
             if (addedNode.parentId() != null) {
                 param.setParentId(addedNode.parentId());

@@ -18,10 +18,13 @@ public class CreateDirectoryNodeMapperParam {
 
     private BigDecimal y;
 
-    public CreateDirectoryNodeMapperParam(Long userId, String label, BigDecimal x, BigDecimal y) {
+    private NodeType nodeType;
+
+    public CreateDirectoryNodeMapperParam(Long userId, String label, BigDecimal x, BigDecimal y, NodeType nodeType) {
         this.userId = userId;
         this.label = label;
         this.x = x;
         this.y = y;
+        this.nodeType = nodeType;
     }
 }

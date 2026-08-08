@@ -10,6 +10,7 @@ public class DirectoryNode {
     private Long parentId;
     private BigDecimal x;
     private BigDecimal y;
+    private NodeType nodeType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;

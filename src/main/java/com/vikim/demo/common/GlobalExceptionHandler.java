@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -57,6 +58,20 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(errorCode.getHttpStatus())
                 .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>>
+    handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException exception
+    ) {
+        ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
+
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.failure(
+                        errorCode.getCode(),
+                        "请求体格式错误或包含非法枚举值"
+                ));
     }
 
     // TODO @ExceptionHandler(Exception.class) 可能把 404、405、JSON 无法解析等客户端错误变成 500。

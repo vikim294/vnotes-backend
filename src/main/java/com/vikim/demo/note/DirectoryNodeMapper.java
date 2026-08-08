@@ -9,8 +9,8 @@ import java.util.Set;
 public interface DirectoryNodeMapper {
 
     @Insert("""
-            insert into directory_nodes(user_id, parent_id, label, x, y)
-            values(#{userId} ,#{parentId}, #{label}, #{x}, #{y})
+            insert into directory_nodes(user_id, parent_id, label, x, y, node_type)
+            values(#{userId} ,#{parentId}, #{label}, #{x}, #{y}, #{nodeType})
     """)
     @Options(
             useGeneratedKeys = true,
@@ -19,7 +19,7 @@ public interface DirectoryNodeMapper {
     int createDirectoryNode(CreateDirectoryNodeMapperParam param);
 
     @Select("""
-            select id, parent_id, label, x, y, created_at, updated_at
+            select id, parent_id, label, x, y, node_type, created_at, updated_at
             from directory_nodes dn
             where dn.user_id = #{user_id} and dn.deleted_at is null
     """)

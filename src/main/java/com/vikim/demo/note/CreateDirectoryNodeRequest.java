@@ -20,6 +20,9 @@ public record CreateDirectoryNodeRequest(
 
         @Digits(integer = 10, fraction = 2)
         @NotNull
-        BigDecimal y
+        BigDecimal y,
+
+        @NotNull(message = "nodeType 不能为空")
+        NodeType nodeType
 ) {
 }
