@@ -25,7 +25,10 @@ public record BatchCreateDetailNodesDTO(
 
         @Digits(integer = 10, fraction = 2)
         @NotNull
-        BigDecimal y
+        BigDecimal y,
+
+        @NotNull(message = "节点内容类型不能为空")
+        DetailNodeContentType contentType
 ) {
 
 }

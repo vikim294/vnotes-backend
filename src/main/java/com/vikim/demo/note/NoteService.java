@@ -211,7 +211,7 @@ public class NoteService {
 
         // 新增节点、记录 uuidToId
         for (BatchCreateDetailNodesDTO addedNode : request.added()) {
-            CreateDetailNodeMapperParam param = new CreateDetailNodeMapperParam(directoryNodeId, addedNode.label(), addedNode.x(), addedNode.y());
+            CreateDetailNodeMapperParam param = new CreateDetailNodeMapperParam(directoryNodeId, addedNode.label(), addedNode.x(), addedNode.y(), addedNode.contentType());
             // 旧节点新增的子节点，parentId 是有值的
             if (addedNode.parentId() != null) {
                 param.setParentId(addedNode.parentId());

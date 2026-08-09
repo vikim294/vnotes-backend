@@ -18,10 +18,13 @@ public class CreateDetailNodeMapperParam {
 
     private BigDecimal y;
 
-    public CreateDetailNodeMapperParam(Long directoryNodeId, String label, BigDecimal x, BigDecimal y) {
+    private DetailNodeContentType contentType;
+
+    public CreateDetailNodeMapperParam(Long directoryNodeId, String label, BigDecimal x, BigDecimal y, DetailNodeContentType contentType) {
         this.directoryNodeId = directoryNodeId;
         this.label = label;
         this.x = x;
         this.y = y;
+        this.contentType = contentType;
     }
 }

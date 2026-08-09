@@ -10,6 +10,7 @@ public record FetchDetailNodesResponse(
         String label,
         BigDecimal x,
         BigDecimal y,
+        DetailNodeContentType contentType,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
