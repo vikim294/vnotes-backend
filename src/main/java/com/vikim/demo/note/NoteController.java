@@ -64,5 +64,12 @@ public class NoteController {
         return ApiResponse.success(noteService.fetchDetailNodesByDirectoryNodeId(getIdFromAuthentication(authentication), id), "获取笔记详情成功");
     }
 
-
+    @PatchMapping("/directory/{id}/detail-nodes/batch")
+    public ApiResponse<BatchUpdateDetailNodesResponse> batchUpdateDetailNotes(
+            Authentication authentication,
+            @PathVariable("id") Long id,
+            @Valid @RequestBody BatchUpdateDetailNodesRequest request
+    ) {
+        return ApiResponse.success(noteService.batchUpdateDetailNotes(getIdFromAuthentication(authentication), id, request), "批量更新详情节点成功");
+    }
 }

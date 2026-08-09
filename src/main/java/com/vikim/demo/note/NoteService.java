@@ -173,4 +173,130 @@ public class NoteService {
 
         return detailNodeMapper.fetchDetailNodesByDirectoryNodeId(directoryNodeId);
     }
+
+    @Transactional
+    public BatchUpdateDetailNodesResponse batchUpdateDetailNotes(
+            Long userId,
+            Long directoryNodeId,
+            BatchUpdateDetailNodesRequest request
+    ) {
+        Map<UUID, Long> uuidToId = new HashMap<>();
+        Set<Long> parentIdsToBeVerified = new HashSet<>();
+        Set<Long> deletedIdsToBeVerified = new HashSet<>(request.deletedNodeIds());
+
+        // 先校验用户是否拥有该 director node
+        if (!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 遍历 added、updated 找出 parentId 不为 null 的
+        Set<Long> parentIdsFromAdded = request.added().stream().filter(node -> node.parentId() != null)
+                .map(BatchCreateDetailNodesDTO::parentId).collect(Collectors.toSet());
+
+        Set<Long> parentIdsFromUpdated = request.updated().stream().filter(node -> node.getParentId() != null)
+                .map(BatchUpdateDetailNodesDTO::getParentId).collect(Collectors.toSet());
+
+        parentIdsToBeVerified.addAll(parentIdsFromAdded);
+        parentIdsToBeVerified.addAll(parentIdsFromUpdated);
+
+        // 校验 parentId 都是用户自己的
+        if(!parentIdsToBeVerified.isEmpty() && parentIdsToBeVerified.size() != detailNodeMapper.countActiveDetailNodesByIds(directoryNodeId, parentIdsToBeVerified)) {
+            throw new BusinessException(ErrorCode.DETAIL_NODE_PARENT_VALIDATION_FAILED);
+        }
+
+        // 校验 deletedNodeIds 都是用户自己的
+        if(!deletedIdsToBeVerified.isEmpty() && deletedIdsToBeVerified.size() != detailNodeMapper.countActiveDetailNodesByIds(directoryNodeId, deletedIdsToBeVerified)) {
+            throw new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND);
+        }
+
+        // 新增节点、记录 uuidToId
+        for (BatchCreateDetailNodesDTO addedNode : request.added()) {
+            CreateDetailNodeMapperParam param = new CreateDetailNodeMapperParam(directoryNodeId, addedNode.label(), addedNode.x(), addedNode.y());
+            // 旧节点新增的子节点，parentId 是有值的
+            if (addedNode.parentId() != null) {
+                param.setParentId(addedNode.parentId());
+            }
+
+            // 创建详情节点
+            int affectedRows = detailNodeMapper.createDetailNode(param);
+            if (affectedRows != 1 || param.getId() == null) {
+                throw new BusinessException(ErrorCode.DETAIL_NODE_CREATED_FAILED);
+            }
+
+            // 保存 uuid -> id
+            uuidToId.put(addedNode.uuid(), param.getId());
+        }
+
+        // 更新 added 节点的 parentId
+        for (BatchCreateDetailNodesDTO addedNode : request.added()) {
+            if (addedNode.parentUuid() != null) {
+                Long id = uuidToId.get(addedNode.uuid());
+                Long parentId = uuidToId.get(addedNode.parentUuid());
+
+                if (parentId == null) {
+                    throw new BusinessException(
+                            ErrorCode.INVALID_DETAIL_NODE_RELATION
+                    );
+                }
+
+                // 更新它们的 parentId 为 uuidToId[parentUuid]
+                int affectedRows = detailNodeMapper.updateDetailNodeParentId(id, directoryNodeId, parentId);
+
+                if (affectedRows != 1) {
+                    throw new BusinessException(
+                            ErrorCode.DETAIL_NODE_UPDATED_PARENT_FAILED
+                    );
+                }
+            }
+        }
+
+        // 更新 updated 节点
+        for (BatchUpdateDetailNodesDTO updatedNodes : request.updated()) {
+            // 情况1 parentId 传了 -> 传 null 或传值，都更新节点的 parentId
+            UpdateDetailNodeMapperParam param = new UpdateDetailNodeMapperParam(directoryNodeId, updatedNodes.getParentId(), updatedNodes.getLabel(), updatedNodes.getX(), updatedNodes.getY());
+
+            // updated 节点必有 id
+            param.setId(updatedNodes.getId());
+
+            boolean parentIdPresent = updatedNodes.isParentIdPresent();
+
+            // 情况2 传了 parentUuid -> 更新节点的 parentId 为父节点（新增节点）的 id
+            if (updatedNodes.getParentUuid() != null) {
+                Long parentId = uuidToId.get(updatedNodes.getParentUuid());
+
+                if (parentId == null) {
+                    throw new BusinessException(
+                            ErrorCode.INVALID_DETAIL_NODE_RELATION
+                    );
+                }
+
+                param.setParentId(parentId);
+                parentIdPresent = true;
+            }
+
+            // 情况3 前端没传 parentId -> 保持旧 parentId 不变
+            param.setParentIdPresent(parentIdPresent);
+
+            int affectedRows = detailNodeMapper.updateDetailNode(param);
+
+            if (affectedRows != 1) {
+                throw new BusinessException(
+                        ErrorCode.DETAIL_NODE_NOT_FOUND
+                );
+            }
+        }
+
+        // 软删除 deletedNodeIds 节点
+        if(!deletedIdsToBeVerified.isEmpty()) {
+            int affectedRows = detailNodeMapper.batchDeleteDetailNodes(directoryNodeId, deletedIdsToBeVerified);
+            // 删除一个孤立节点 -> 二者相等
+            // 删除一个有后代的节点 -> affectedRows > size
+            // 所以这里的判断不能用 !=
+            if(affectedRows < deletedIdsToBeVerified.size()) {
+                throw new BusinessException(ErrorCode.DETAIL_NODE_BATCH_DELETE_FAILED);
+            }
+        }
+
+        return new BatchUpdateDetailNodesResponse(uuidToId);
+    }
 }

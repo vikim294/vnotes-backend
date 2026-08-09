@@ -54,6 +54,30 @@ public enum ErrorCode {
             "目录节点 parent id 校验失败"
     ),
 
+    DETAIL_NODE_PARENT_VALIDATION_FAILED(
+            40003,
+            HttpStatus.BAD_REQUEST,
+            "详情节点 parent id 校验失败"
+    ),
+
+    DETAIL_NODE_NOT_FOUND(
+            40004,
+            HttpStatus.NOT_FOUND,
+            "详情节点不存在"
+    ),
+
+    INVALID_DIRECTORY_NODE_RELATION(
+            40005,
+            HttpStatus.BAD_REQUEST,
+            "非法目录节点关系"
+    ),
+
+    INVALID_DETAIL_NODE_RELATION(
+            40006,
+            HttpStatus.BAD_REQUEST,
+            "非法详情节点关系"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -66,11 +90,7 @@ public enum ErrorCode {
             "创建目录节点失败"
     ),
 
-    INVALID_DIRECTORY_NODE_RELATION(
-            50003,
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "非法目录节点关系"
-    ),
+
 
     DIRECTORY_NODE_UPDATED_PARENT_FAILED(
             50004,
@@ -88,7 +108,28 @@ public enum ErrorCode {
             50006,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "批量删除目录节点失败"
-    );
+    ),
+
+    DETAIL_NODE_CREATED_FAILED(
+            50007,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "创建详情节点失败"
+    ),
+
+
+
+    DETAIL_NODE_UPDATED_PARENT_FAILED(
+            50009,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "更新详情节点的父节点失败"
+    ),
+
+    DETAIL_NODE_BATCH_DELETE_FAILED(
+            50010,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "批量删除详情节点失败"
+    ),
+    ;
 
     private final int code;
     private final HttpStatus httpStatus;
