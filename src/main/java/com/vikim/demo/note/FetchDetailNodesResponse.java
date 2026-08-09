@@ -11,6 +11,7 @@ public record FetchDetailNodesResponse(
         BigDecimal x,
         BigDecimal y,
         DetailNodeContentType contentType,
+        DetailNodeMarkType markType,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

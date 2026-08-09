@@ -190,8 +190,8 @@ public class NoteService {
         }
 
         // 遍历 added、updated 找出 parentId 不为 null 的
-        Set<Long> parentIdsFromAdded = request.added().stream().filter(node -> node.parentId() != null)
-                .map(BatchCreateDetailNodesDTO::parentId).collect(Collectors.toSet());
+        Set<Long> parentIdsFromAdded = request.added().stream().filter(node -> node.getParentId() != null)
+                .map(BatchCreateDetailNodesDTO::getParentId).collect(Collectors.toSet());
 
         Set<Long> parentIdsFromUpdated = request.updated().stream().filter(node -> node.getParentId() != null)
                 .map(BatchUpdateDetailNodesDTO::getParentId).collect(Collectors.toSet());
@@ -211,10 +211,10 @@ public class NoteService {
 
         // 新增节点、记录 uuidToId
         for (BatchCreateDetailNodesDTO addedNode : request.added()) {
-            CreateDetailNodeMapperParam param = new CreateDetailNodeMapperParam(directoryNodeId, addedNode.label(), addedNode.x(), addedNode.y(), addedNode.contentType());
+            CreateDetailNodeMapperParam param = new CreateDetailNodeMapperParam(directoryNodeId, addedNode.getLabel(), addedNode.getX(), addedNode.getY(), addedNode.getContentType(), addedNode.getMarkType());
             // 旧节点新增的子节点，parentId 是有值的
-            if (addedNode.parentId() != null) {
-                param.setParentId(addedNode.parentId());
+            if (addedNode.getParentId() != null) {
+                param.setParentId(addedNode.getParentId());
             }
 
             // 创建详情节点
@@ -224,14 +224,14 @@ public class NoteService {
             }
 
             // 保存 uuid -> id
-            uuidToId.put(addedNode.uuid(), param.getId());
+            uuidToId.put(addedNode.getUuid(), param.getId());
         }
 
         // 更新 added 节点的 parentId
         for (BatchCreateDetailNodesDTO addedNode : request.added()) {
-            if (addedNode.parentUuid() != null) {
-                Long id = uuidToId.get(addedNode.uuid());
-                Long parentId = uuidToId.get(addedNode.parentUuid());
+            if (addedNode.getParentUuid() != null) {
+                Long id = uuidToId.get(addedNode.getUuid());
+                Long parentId = uuidToId.get(addedNode.getParentUuid());
 
                 if (parentId == null) {
                     throw new BusinessException(
@@ -253,7 +253,7 @@ public class NoteService {
         // 更新 updated 节点
         for (BatchUpdateDetailNodesDTO updatedNodes : request.updated()) {
             // 情况1 parentId 传了 -> 传 null 或传值，都更新节点的 parentId
-            UpdateDetailNodeMapperParam param = new UpdateDetailNodeMapperParam(directoryNodeId, updatedNodes.getParentId(), updatedNodes.getLabel(), updatedNodes.getX(), updatedNodes.getY());
+            UpdateDetailNodeMapperParam param = new UpdateDetailNodeMapperParam(directoryNodeId, updatedNodes.getParentId(), updatedNodes.getLabel(), updatedNodes.getX(), updatedNodes.getY(), updatedNodes.getMarkType(), updatedNodes.isMarkTypePresent());
 
             // updated 节点必有 id
             param.setId(updatedNodes.getId());

@@ -11,6 +11,7 @@ public class DetailNode {
     private BigDecimal x;
     private BigDecimal y;
     private DetailNodeContentType contentType;
+    private DetailNodeMarkType markType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;

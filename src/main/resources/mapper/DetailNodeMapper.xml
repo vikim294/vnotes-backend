@@ -29,6 +29,10 @@
                 parent_id = #{parentId},
             </if>
 
+            <if test="markTypePresent">
+                mark_type = #{markType},
+            </if>
+
             label = #{label},
             x = #{x},
             y = #{y}
@@ -66,5 +70,32 @@
         set node.deleted_at = current_timestamp(6)
         where node.deleted_at is null
     </update>
+
+    <insert id="createDetailNode" useGeneratedKeys="true" keyProperty="id">
+
+        INSERT INTO detail_nodes
+
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            directory_node_id,
+            parent_id,
+            label,
+            x,
+            y,
+            content_type,
+            mark_type,
+        </trim>
+
+        VALUES
+
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{directoryNodeId},
+            #{parentId},
+            #{label},
+            #{x},
+            #{y},
+            #{contentType},
+            #{markType},
+        </trim>
+    </insert>
 
 </mapper>

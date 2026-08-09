@@ -20,11 +20,14 @@ public class CreateDetailNodeMapperParam {
 
     private DetailNodeContentType contentType;
 
-    public CreateDetailNodeMapperParam(Long directoryNodeId, String label, BigDecimal x, BigDecimal y, DetailNodeContentType contentType) {
+    private DetailNodeMarkType markType;
+
+    public CreateDetailNodeMapperParam(Long directoryNodeId, String label, BigDecimal x, BigDecimal y, DetailNodeContentType contentType, DetailNodeMarkType markType) {
         this.directoryNodeId = directoryNodeId;
         this.label = label;
         this.x = x;
         this.y = y;
         this.contentType = contentType;
+        this.markType = markType;
     }
 }

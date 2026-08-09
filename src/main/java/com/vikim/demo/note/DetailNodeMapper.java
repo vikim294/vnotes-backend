@@ -10,7 +10,7 @@ public interface DetailNodeMapper {
 
 
     @Select("""
-            select id, parent_id, directory_node_id, label, x, y, content_type, created_at, updated_at
+            select id, parent_id, directory_node_id, label, x, y, content_type, mark_type, created_at, updated_at
             from detail_nodes
             where directory_node_id = #{directoryNodeId} and deleted_at is null
     """)
@@ -19,16 +19,7 @@ public interface DetailNodeMapper {
 
     int countActiveDetailNodesByIds(@Param("directoryNodeId") Long directoryNodeId, @Param("ids") Set<Long> ids);
 
-    @Insert("""
-            insert into detail_nodes(directory_node_id, parent_id, label, x, y, content_type)
-            values(#{directoryNodeId} ,#{parentId}, #{label}, #{x}, #{y}, #{contentType})
-    """)
-    @Options(
-            useGeneratedKeys = true,
-            keyProperty = "id"
-    )
     int createDetailNode(CreateDetailNodeMapperParam param);
-
 
     @Update("""
         update detail_nodes
