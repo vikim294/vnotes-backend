@@ -41,11 +41,11 @@ public class UserController {
         return ApiResponse.success("注册成功");
     }
 
-    @GetMapping("/me")
-    public ApiResponse<String> me(
+    @GetMapping("/profile")
+    public ApiResponse<UserProfileResponse> getProfile(
             Authentication authentication
     ) {
-        return ApiResponse.success(authentication.getName(), "获取当前用户信息成功");
+        return ApiResponse.success(userService.getProfile(getIdFromAuthentication(authentication)), "获取当前用户信息成功");
     }
 
     @PostMapping("/avatar")

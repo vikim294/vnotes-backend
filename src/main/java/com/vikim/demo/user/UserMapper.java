@@ -35,4 +35,11 @@ public interface UserMapper {
             where id = #{userId}
             """)
     int updateAvatarUrl(@Param("userId") Long userId, @Param("avatarUrl") String avatarUrl);
+
+    @Select("""
+            select id, username, email, avatar_url, created_at
+            from users
+            where id = #{userId}
+            """)
+    Optional<UserProfileResponse> getProfile(@Param("userId") Long userId);
 }

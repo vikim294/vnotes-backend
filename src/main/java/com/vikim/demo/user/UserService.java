@@ -101,4 +101,10 @@ public class UserService {
 
         return new UploadAvatarResponse(fileUrl);
     }
+
+    public UserProfileResponse getProfile(Long userId) {
+        return userMapper.getProfile(userId).orElseThrow(() ->
+                new BusinessException(ErrorCode.USER_NOT_FOUND)
+        );
+    }
 }
