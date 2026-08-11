@@ -1,9 +1,7 @@
 package com.vikim.demo.user;
 
 
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +11,7 @@ import java.util.Optional;
 public interface UserMapper {
 
     @Select("""
-        select id, username, email, created_at
+        select id, username, email, avatar_url, created_at
         from users
     """)
     List<User> findAll();
@@ -30,4 +28,11 @@ public interface UserMapper {
             where u.email = #{email}
             """)
     Optional<User> findByEmail(String email);
+
+    @Update("""
+            update users
+            set avatar_url = #{avatarUrl}
+            where id = #{userId}
+            """)
+    int updateAvatarUrl(@Param("userId") Long userId, @Param("avatarUrl") String avatarUrl);
 }

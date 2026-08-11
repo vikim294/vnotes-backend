@@ -78,6 +78,30 @@ public enum ErrorCode {
             "非法详情节点关系"
     ),
 
+    FILE_IS_NOT_PRESENT(
+            40007,
+            HttpStatus.BAD_REQUEST,
+            "未提供文件"
+    ),
+
+    USER_NOT_FOUND(
+            40008,
+            HttpStatus.BAD_REQUEST,
+            "用户不存在"
+    ),
+
+    UNSUPPORTED_IMAGE_TYPE(
+            40009,
+            HttpStatus.BAD_REQUEST,
+            "图片类型不支持"
+    ),
+
+    FILE_CONTENT_TYPE_IS_NULL(
+            40010,
+            HttpStatus.BAD_REQUEST,
+            "文件类型为 null"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -129,6 +153,32 @@ public enum ErrorCode {
             HttpStatus.INTERNAL_SERVER_ERROR,
             "批量删除详情节点失败"
     ),
+
+    FILE_NAME_IS_NULL(
+            50011,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "文件名为 null"
+    ),
+
+    FILE_EXTENSION_NOT_FOUNDED(
+            50012,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "解析不到文件扩展名"
+    ),
+
+    FILE_WRITING_FAILED(
+            50013,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "文件写入失败"
+    ),
+
+    DIR_CREATED_FAILED(
+            50014,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "文件目录创建失败"
+    ),
+
+
     ;
 
     private final int code;

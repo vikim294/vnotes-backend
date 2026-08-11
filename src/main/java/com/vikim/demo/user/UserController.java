@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -14,14 +15,17 @@ import java.util.List;
 @RequestMapping("/user")
 public class UserController {
 
-
     private final UserService userService;
 
-
     public UserController(UserService userService) {
-
         this.userService = userService;
+    }
 
+
+    private Long getIdFromAuthentication(
+            Authentication authentication
+    ) {
+        return Long.valueOf(authentication.getName());
     }
 
 
@@ -42,5 +46,13 @@ public class UserController {
             Authentication authentication
     ) {
         return ApiResponse.success(authentication.getName(), "获取当前用户信息成功");
+    }
+
+    @PostMapping("/avatar")
+    public ApiResponse<UploadAvatarResponse> uploadAvatar(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ApiResponse.success(userService.uploadAvatar(getIdFromAuthentication(authentication), file), "上传头像成功");
     }
 }

@@ -42,7 +42,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/health"
+                                "/health",
+                                "/uploads/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
