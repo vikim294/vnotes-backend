@@ -3,10 +3,15 @@ package com.vikim.demo.note;
 import com.vikim.demo.common.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/note")
@@ -64,12 +69,32 @@ public class NoteController {
         return ApiResponse.success(noteService.fetchDetailNodesByDirectoryNodeId(getIdFromAuthentication(authentication), id), "获取笔记详情成功");
     }
 
-    @PatchMapping("/directory/{id}/detail-nodes/batch")
+    @PatchMapping(
+            value = "/directory/{id}/detail-nodes/batch",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ApiResponse<BatchUpdateDetailNodesResponse> batchUpdateDetailNotes(
             Authentication authentication,
             @PathVariable("id") Long id,
-            @Valid @RequestBody BatchUpdateDetailNodesRequest request
+            // 前端需要让 request 使用 application/json 类型的 Blob；如果用普通字符串，@RequestPart 可能因为 part 的 Content-Type 变成 text/plain 而无法自动反序列化 DTO
+            @Valid @RequestPart("request") BatchUpdateDetailNodesRequest request,
+            MultipartHttpServletRequest multipartRequest
     ) {
-        return ApiResponse.success(noteService.batchUpdateDetailNotes(getIdFromAuthentication(authentication), id, request), "批量更新详情节点成功");
+        // Blob 在 multipart 中也会被 Spring 当作文件 part
+        // 因此：multipartRequest.getFileMap() 拿到的不只是图片，还包括 request
+        // 所以这里先把图片文件都过滤出来
+        Map<String, MultipartFile> imageFiles =
+                multipartRequest.getFileMap()
+                        .entrySet()
+                        .stream()
+                        .filter(entry ->
+                                entry.getKey().startsWith("file.")
+                        )
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue
+                        ));
+        BatchUpdateDetailNodesResponse response = noteService.batchUpdateDetailNotes(getIdFromAuthentication(authentication), id, request, imageFiles);
+        return ApiResponse.success(response, "批量更新详情节点成功");
     }
 }

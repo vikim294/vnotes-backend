@@ -17,7 +17,6 @@ public class BatchUpdateDetailNodesDTO {
     private Long parentId;
     private UUID parentUuid;
 
-    @NotBlank(message = "标签不能为空")
     @Size(max = 8192, message = "最多 8192 字符")
     private String label;
 
@@ -28,6 +27,12 @@ public class BatchUpdateDetailNodesDTO {
     @Digits(integer = 10, fraction = 2)
     @NotNull
     private BigDecimal y;
+
+    @Digits(integer = 10, fraction = 2)
+    private BigDecimal imageWidth;
+
+    @Digits(integer = 10, fraction = 2)
+    private BigDecimal imageHeight;
 
     @JsonIgnore // 避免客户端直接传该字段
     private boolean parentIdPresent;

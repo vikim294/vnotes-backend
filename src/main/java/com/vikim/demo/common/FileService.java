@@ -1,6 +1,5 @@
 package com.vikim.demo.common;
 
-import com.vikim.demo.user.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -9,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @Service
 public class FileService {
@@ -51,6 +51,12 @@ public class FileService {
                     target,
                     ioException
             );
+        }
+    }
+
+    public void deleteQuietly(List<Path> targets) {
+        for(Path target : targets) {
+            deleteQuietly(target);
         }
     }
 }

@@ -18,7 +18,6 @@ public class BatchCreateDetailNodesDTO{
         private UUID uuid;
         private UUID parentUuid;
 
-        @NotBlank(message = "标签不能为空")
         @Size(max = 8192, message = "最多 8192 字符")
         private String label;
 
@@ -29,6 +28,12 @@ public class BatchCreateDetailNodesDTO{
         @Digits(integer = 10, fraction = 2)
         @NotNull
         private BigDecimal y;
+
+        @Digits(integer = 10, fraction = 2)
+        private BigDecimal imageWidth;
+
+        @Digits(integer = 10, fraction = 2)
+        private BigDecimal imageHeight;
 
         @NotNull(message = "节点内容类型不能为空")
         private DetailNodeContentType contentType;

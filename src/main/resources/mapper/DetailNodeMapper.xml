@@ -35,7 +35,9 @@
 
             label = #{label},
             x = #{x},
-            y = #{y}
+            y = #{y},
+            image_width = #{imageWidth},
+            image_height = #{imageHeight}
         </set>
 
         where id = #{id} and directory_node_id = #{directoryNodeId} and deleted_at is null
@@ -79,8 +81,11 @@
             directory_node_id,
             parent_id,
             label,
+            image_url,
             x,
             y,
+            image_width,
+            image_height,
             content_type,
             mark_type,
         </trim>
@@ -91,8 +96,11 @@
             #{directoryNodeId},
             #{parentId},
             #{label},
+            #{imageUrl},
             #{x},
             #{y},
+            #{imageWidth},
+            #{imageHeight},
             #{contentType},
             #{markType},
         </trim>

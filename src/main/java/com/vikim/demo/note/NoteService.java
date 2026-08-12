@@ -2,9 +2,16 @@ package com.vikim.demo.note;
 
 import com.vikim.demo.common.BusinessException;
 import com.vikim.demo.common.ErrorCode;
+import com.vikim.demo.common.FileService;
+import com.vikim.demo.common.FileUploadProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -12,10 +19,16 @@ import java.util.stream.Collectors;
 public class NoteService {
     private final DirectoryNodeMapper directoryNodeMapper;
     private final DetailNodeMapper detailNodeMapper;
+    private final FileService fileService;
+    private final FileUploadProperties fileUploadProperties;
+    private final DetailNodeTransactionService detailNodeTransactionService;
 
-    public NoteService(DirectoryNodeMapper directoryNodeMapper, DetailNodeMapper detailNodeMapper) {
+    public NoteService(DirectoryNodeMapper directoryNodeMapper, DetailNodeMapper detailNodeMapper, FileService fileService, FileUploadProperties fileUploadProperties, DetailNodeTransactionService detailNodeTransactionService) {
         this.directoryNodeMapper = directoryNodeMapper;
         this.detailNodeMapper = detailNodeMapper;
+        this.fileService = fileService;
+        this.fileUploadProperties = fileUploadProperties;
+        this.detailNodeTransactionService = detailNodeTransactionService;
     }
 
     public Long createDirectoryNode(Long userId, CreateDirectoryNodeRequest request) {
@@ -174,13 +187,13 @@ public class NoteService {
         return detailNodeMapper.fetchDetailNodesByDirectoryNodeId(directoryNodeId);
     }
 
-    @Transactional
     public BatchUpdateDetailNodesResponse batchUpdateDetailNotes(
             Long userId,
             Long directoryNodeId,
-            BatchUpdateDetailNodesRequest request
+            BatchUpdateDetailNodesRequest request,
+            Map<String, MultipartFile> files
     ) {
-        Map<UUID, Long> uuidToId = new HashMap<>();
+        // --- 先校验 节点是否是用户的
         Set<Long> parentIdsToBeVerified = new HashSet<>();
         Set<Long> deletedIdsToBeVerified = new HashSet<>(request.deletedNodeIds());
 
@@ -209,94 +222,101 @@ public class NoteService {
             throw new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND);
         }
 
-        // 新增节点、记录 uuidToId
         for (BatchCreateDetailNodesDTO addedNode : request.added()) {
-            CreateDetailNodeMapperParam param = new CreateDetailNodeMapperParam(directoryNodeId, addedNode.getLabel(), addedNode.getX(), addedNode.getY(), addedNode.getContentType(), addedNode.getMarkType());
-            // 旧节点新增的子节点，parentId 是有值的
-            if (addedNode.getParentId() != null) {
-                param.setParentId(addedNode.getParentId());
-            }
-
-            // 创建详情节点
-            int affectedRows = detailNodeMapper.createDetailNode(param);
-            if (affectedRows != 1 || param.getId() == null) {
-                throw new BusinessException(ErrorCode.DETAIL_NODE_CREATED_FAILED);
-            }
-
-            // 保存 uuid -> id
-            uuidToId.put(addedNode.getUuid(), param.getId());
-        }
-
-        // 更新 added 节点的 parentId
-        for (BatchCreateDetailNodesDTO addedNode : request.added()) {
-            if (addedNode.getParentUuid() != null) {
-                Long id = uuidToId.get(addedNode.getUuid());
-                Long parentId = uuidToId.get(addedNode.getParentUuid());
-
-                if (parentId == null) {
-                    throw new BusinessException(
-                            ErrorCode.INVALID_DETAIL_NODE_RELATION
-                    );
-                }
-
-                // 更新它们的 parentId 为 uuidToId[parentUuid]
-                int affectedRows = detailNodeMapper.updateDetailNodeParentId(id, directoryNodeId, parentId);
-
-                if (affectedRows != 1) {
-                    throw new BusinessException(
-                            ErrorCode.DETAIL_NODE_UPDATED_PARENT_FAILED
-                    );
+            // 校验：added 的文本节点对应的 label 是否为空
+            if(addedNode.getContentType() == DetailNodeContentType.TEXT) {
+                if(addedNode.getLabel() == null || addedNode.getLabel().trim().isBlank()) {
+                    throw new BusinessException(ErrorCode.TEXT_NODE_LABEL_IS_NULL);
                 }
             }
         }
 
-        // 更新 updated 节点
-        for (BatchUpdateDetailNodesDTO updatedNodes : request.updated()) {
-            // 情况1 parentId 传了 -> 传 null 或传值，都更新节点的 parentId
-            UpdateDetailNodeMapperParam param = new UpdateDetailNodeMapperParam(directoryNodeId, updatedNodes.getParentId(), updatedNodes.getLabel(), updatedNodes.getX(), updatedNodes.getY(), updatedNodes.getMarkType(), updatedNodes.isMarkTypePresent());
+        for (BatchUpdateDetailNodesDTO updatedNode : request.updated()) {
+            // 校验：updated 的文本节点对应的 label 是否为空
+            FetchDetailNodesResponse existingNode =
+                    detailNodeMapper
+                            .getDetailNodeById(
+                                    updatedNode.getId(),
+                                    directoryNodeId
+                            )
+                            .orElseThrow(() ->
+                                    new BusinessException(
+                                            ErrorCode.DETAIL_NODE_NOT_FOUND
+                                    )
+                            );
+             if(existingNode.contentType() == DetailNodeContentType.TEXT) {
+                 if(updatedNode.getLabel() == null || updatedNode.getLabel().trim().isBlank()) {
+                     throw new BusinessException(ErrorCode.TEXT_NODE_LABEL_IS_NULL);
+                 }
+             }
+        }
 
-            // updated 节点必有 id
-            param.setId(updatedNodes.getId());
+        List<BatchCreateDetailNodesDTO> imageNodes = request.added().stream().filter(node -> node.getContentType() == DetailNodeContentType.IMAGE).toList();
 
-            boolean parentIdPresent = updatedNodes.isParentIdPresent();
+        // 校验：added 的图片节点和 files 是否一一对应
+        Set<String> expectedFileNames = imageNodes.stream().map(node -> "file." + node.getUuid()).collect(Collectors.toSet());
+        if (!files.keySet().equals(expectedFileNames)) {
+            throw new BusinessException(
+                    ErrorCode.IMAGE_NODE_FILES_NOT_MATCH
+            );
+        }
 
-            // 情况2 传了 parentUuid -> 更新节点的 parentId 为父节点（新增节点）的 id
-            if (updatedNodes.getParentUuid() != null) {
-                Long parentId = uuidToId.get(updatedNodes.getParentUuid());
+        Map<UUID, UploadImageOfNodeVO> succeededImageNodes = new HashMap<>();
+        List<Path> filesToBeDeletedWhenError = new ArrayList<>();
 
-                if (parentId == null) {
-                    throw new BusinessException(
-                            ErrorCode.INVALID_DETAIL_NODE_RELATION
-                    );
+        try {
+            // --- 先保存图片节点的图片文件
+            for(BatchCreateDetailNodesDTO imageNode : imageNodes) {
+                MultipartFile file = files.get("file." + imageNode.getUuid());
+
+                if(file.isEmpty()) {
+                    throw new BusinessException(ErrorCode.FILE_IS_NOT_PRESENT);
                 }
 
-                param.setParentId(parentId);
-                parentIdPresent = true;
+                UploadImageOfNodeVO vo = new UploadImageOfNodeVO();
+                vo.setUuid(imageNode.getUuid());
+
+                // 生成随机文件名
+                String filename = UUID.randomUUID()
+                        + fileService.getImageExtensionByFileMimeType(file);
+
+                // 文件保存目录
+                Path dir = Paths.get(fileUploadProperties.uploadDir(), "imageNodes");
+
+                // 文件保存 url
+                Path target =
+                        dir.resolve(filename);
+
+                try {
+                    Files.createDirectories(dir);
+                } catch (IOException e) {
+                    throw new BusinessException(ErrorCode.DIR_CREATED_FAILED);
+                }
+
+                try {
+                    // 写入文件到本地
+                    file.transferTo(target);
+                } catch (IOException e) {
+                    fileService.deleteQuietly(target);
+
+                    filesToBeDeletedWhenError.add(target);
+                    throw new BusinessException(ErrorCode.FILE_WRITING_FAILED);
+                }
+
+                // 文件访问 url
+                String fileUrl = "/uploads/imageNodes/" + filename;
+
+                vo.setUrl(fileUrl);
+                filesToBeDeletedWhenError.add(target);
+                succeededImageNodes.put(vo.getUuid(), vo);
             }
 
-            // 情况3 前端没传 parentId -> 保持旧 parentId 不变
-            param.setParentIdPresent(parentIdPresent);
-
-            int affectedRows = detailNodeMapper.updateDetailNode(param);
-
-            if (affectedRows != 1) {
-                throw new BusinessException(
-                        ErrorCode.DETAIL_NODE_NOT_FOUND
-                );
-            }
+            // 再更新数据库
+            return detailNodeTransactionService.batchUpdateDetailNotesToDB(directoryNodeId, request, succeededImageNodes, deletedIdsToBeVerified);
+        } catch (RuntimeException e) {
+            // 清理已保存的文件
+            fileService.deleteQuietly(filesToBeDeletedWhenError);
+            throw e;
         }
-
-        // 软删除 deletedNodeIds 节点
-        if(!deletedIdsToBeVerified.isEmpty()) {
-            int affectedRows = detailNodeMapper.batchDeleteDetailNodes(directoryNodeId, deletedIdsToBeVerified);
-            // 删除一个孤立节点 -> 二者相等
-            // 删除一个有后代的节点 -> affectedRows > size
-            // 所以这里的判断不能用 !=
-            if(affectedRows < deletedIdsToBeVerified.size()) {
-                throw new BusinessException(ErrorCode.DETAIL_NODE_BATCH_DELETE_FAILED);
-            }
-        }
-
-        return new BatchUpdateDetailNodesResponse(uuidToId);
     }
 }

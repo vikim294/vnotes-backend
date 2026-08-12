@@ -102,6 +102,24 @@ public enum ErrorCode {
             "文件类型为 null"
     ),
 
+    IMAGE_NODE_FILE_NOT_PROVIDED(
+            40011,
+            HttpStatus.BAD_REQUEST,
+            "缺少对应的图片文件"
+    ),
+
+    TEXT_NODE_LABEL_IS_NULL(
+            40012,
+            HttpStatus.BAD_REQUEST,
+            "文本节点 label 不能为空"
+    ),
+
+    IMAGE_NODE_FILES_NOT_MATCH(
+            40013,
+            HttpStatus.BAD_REQUEST,
+            "图片节点和文件不匹配"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
