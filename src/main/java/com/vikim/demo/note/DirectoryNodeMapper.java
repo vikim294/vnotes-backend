@@ -25,6 +25,10 @@ public interface DirectoryNodeMapper {
     """)
     List<FetchDirectoryNodesResponse> fetchAllDirectoryNodes(@Param("user_id") Long userId);
 
+    List<FetchDirectoryNodesResponse> searchDirectoryNodes(SearchDirectoryNodeMapperParam param);
+
+    int countDirectoryNodes(SearchDirectoryNodeMapperParam param);
+
     @Select("""
         select exists(
             select 1

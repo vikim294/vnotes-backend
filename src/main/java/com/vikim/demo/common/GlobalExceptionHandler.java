@@ -10,6 +10,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -26,6 +28,56 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(errorCode.getHttpStatus())
                 .body(ApiResponse.failure(errorCode.getCode(),errorCode.getMessage()));
+    }
+
+
+
+    // 并发下，如果数据库侧有问题，会在这里处理
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
+            DataIntegrityViolationException exception,
+            HttpServletRequest request
+    ) {
+        ErrorCode errorCode = ErrorCode.DATA_CONFLICT;
+
+        return ResponseEntity.status(errorCode.getHttpStatus())
+                .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>>
+    handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException exception
+    ) {
+        ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
+
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResponse<Void>>
+    handleHandlerMethodValidationException(
+            HandlerMethodValidationException exception
+    ) {
+        ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
+
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>>
+    handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException exception
+    ) {
+        ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
+
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.failure(
+                        errorCode.getCode(),
+                        "请求体格式错误或包含非法枚举值"
+                ));
     }
 
     // 当 controller @Valid 校验失败时，Controller 抛 MethodArgumentNotValidException 异常，然后流程就会进入 handleValidationException
@@ -46,32 +98,6 @@ public class GlobalExceptionHandler {
         // 返回 400，响应体为 response
         return ResponseEntity.badRequest()
                 .body(ApiResponse.failure(errorCode.getCode(), message));
-    }
-
-    // 并发下，如果数据库侧有问题，会在这里处理
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
-            DataIntegrityViolationException exception,
-            HttpServletRequest request
-    ) {
-        ErrorCode errorCode = ErrorCode.DATA_CONFLICT;
-
-        return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage()));
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleHttpMessageNotReadableException(
-            HttpMessageNotReadableException exception
-    ) {
-        ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
-
-        return ResponseEntity.badRequest()
-                .body(ApiResponse.failure(
-                        errorCode.getCode(),
-                        "请求体格式错误或包含非法枚举值"
-                ));
     }
 
     // TODO @ExceptionHandler(Exception.class) 可能把 404、405、JSON 无法解析等客户端错误变成 500。

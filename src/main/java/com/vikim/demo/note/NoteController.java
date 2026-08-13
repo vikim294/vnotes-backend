@@ -1,7 +1,10 @@
 package com.vikim.demo.note;
 
 import com.vikim.demo.common.ApiResponse;
+import com.vikim.demo.common.PageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -9,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,6 +46,34 @@ public class NoteController {
             Authentication authentication
     ) {
         return ApiResponse.success(noteService.fetchAllDirectoryNodes(getIdFromAuthentication(authentication)), "获取笔记目录成功");
+    }
+
+    @GetMapping("/directory/search")
+    public ApiResponse<PageResponse<FetchDirectoryNodesResponse>> searchDirectoryNodes(
+            Authentication authentication,
+
+            @RequestParam(value = "keyword", required = false)
+            String keyword,
+
+            @RequestParam(value = "pageSize", defaultValue = "10")
+            @Min(value = 1, message = "pageSize 不能小于 1")
+            @Max(value = 100, message = "pageSize 不能大于 100")
+            int pageSize,
+
+            @Min(value = 1, message = "page 不能小于 1")
+            @RequestParam(value = "page", defaultValue = "1")
+            int page,
+
+            @RequestParam(value = "nodeType", required = false)
+            NodeType nodeType,
+
+            @RequestParam(value = "startTime", required = false)
+            LocalDateTime startTime,
+
+            @RequestParam(value = "endTime", required = false)
+            LocalDateTime endTime
+    ) {
+        return ApiResponse.success(noteService.searchDirectoryNodes(getIdFromAuthentication(authentication), keyword, pageSize, page, nodeType, startTime, endTime), "搜索笔记目录成功");
     }
 
     @DeleteMapping("/directory/{id}")

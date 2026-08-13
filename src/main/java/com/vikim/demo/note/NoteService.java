@@ -1,9 +1,6 @@
 package com.vikim.demo.note;
 
-import com.vikim.demo.common.BusinessException;
-import com.vikim.demo.common.ErrorCode;
-import com.vikim.demo.common.FileService;
-import com.vikim.demo.common.FileUploadProperties;
+import com.vikim.demo.common.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,6 +44,15 @@ public class NoteService {
 
     public List<FetchDirectoryNodesResponse> fetchAllDirectoryNodes(Long userId) {
         return directoryNodeMapper.fetchAllDirectoryNodes(userId);
+    }
+
+    public PageResponse<FetchDirectoryNodesResponse> searchDirectoryNodes(Long userId, String keyword, int pageSize, int page, NodeType nodeType, LocalDateTime startTime, LocalDateTime endTime) {
+        SearchDirectoryNodeMapperParam param = new SearchDirectoryNodeMapperParam(userId, keyword, pageSize, (page - 1) * pageSize, nodeType, startTime, endTime);
+
+        List<FetchDirectoryNodesResponse> responses = directoryNodeMapper.searchDirectoryNodes(param);
+        int total = directoryNodeMapper.countDirectoryNodes(param);
+
+        return new PageResponse<>(responses, page, pageSize, total);
     }
 
     public void deleteDirectoryNode(Long id, Long userId) {

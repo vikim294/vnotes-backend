@@ -67,4 +67,46 @@
         where node.deleted_at is null
     </update>
 
+    <sql id="searchDirectoryNodesConditions">
+        <where>
+            and user_id = #{userId}
+            and deleted_at is null
+
+            <if test="keyword != null and keyword != ''">
+                and label like concat('%', #{keyword}, '%')
+            </if>
+
+            <if test="nodeType != null">
+                and node_type = #{nodeType}
+            </if>
+
+            <if test="startTime != null">
+                and created_at >= #{startTime}
+            </if>
+
+            <if test="endTime != null">
+                and created_at &lt; #{endTime}
+            </if>
+        </where>
+    </sql>
+
+    <select id="searchDirectoryNodes" resultType="com.vikim.demo.note.FetchDirectoryNodesResponse">
+        select id, parent_id, label, x, y, node_type, created_at, updated_at
+        from directory_nodes
+
+        <include refid="searchDirectoryNodesConditions"/>
+
+        order by created_at desc, id desc
+
+        limit #{limit}
+        offset #{offset}
+    </select>
+
+    <select id="countDirectoryNodes" resultType="int">
+        select count(*)
+        from directory_nodes
+
+        <include refid="searchDirectoryNodesConditions"/>
+    </select>
+
 </mapper>
