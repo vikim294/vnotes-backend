@@ -114,4 +114,35 @@
             #{directoryNodeId}
         </foreach>
     </select>
+
+    <insert id="createDetailNodeFromImport" useGeneratedKeys="true" keyProperty="id">
+
+        INSERT INTO detail_nodes
+
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            directory_node_id,
+            parent_id,
+            label,
+            x,
+            y,
+            content_type,
+            mark_type,
+            created_at,
+            updated_at
+        </trim>
+
+        VALUES
+
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{directoryNodeId},
+            #{parentId},
+            #{label},
+            #{x},
+            #{y},
+            #{contentType},
+            #{markType},
+            #{createdAt},
+            #{updatedAt},
+        </trim>
+    </insert>
 </mapper>

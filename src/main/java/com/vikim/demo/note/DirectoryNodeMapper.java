@@ -91,4 +91,14 @@ public interface DirectoryNodeMapper {
             where user_id = #{user_id} and deleted_at is null
     """)
     List<ExportDirectoryNodeVO> getExportDirectoryNodes(@Param("user_id") Long userId);
+
+    @Insert("""
+            insert into directory_nodes(user_id, parent_id, label, x, y, node_type, created_at, updated_at)
+            values(#{userId} ,#{parentId}, #{label}, #{x}, #{y}, #{nodeType}, #{createdAt}, #{updatedAt})
+    """)
+    @Options(
+            useGeneratedKeys = true,
+            keyProperty = "id"
+    )
+    int createDirectoryNodeFromImport(CreateDirectoryNodeFromImportMapperParam param);
 }

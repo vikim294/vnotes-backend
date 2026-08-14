@@ -48,4 +48,5 @@ public interface DetailNodeMapper {
 
     List<ExportDetailNodeVO> getExportDetailNodesByDirectoryNodeIds(@Param("directoryNodeIds") List<Long> directoryNodeIds);
 
+    int createDetailNodeFromImport(CreateDetailNodeFromImportMapperParam param);
 }

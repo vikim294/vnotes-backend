@@ -25,11 +25,13 @@ import java.util.stream.Collectors;
 public class NoteController {
     private final NoteService noteService;
     private final ExportService exportService;
+    private final ImportService importService;
     private final ObjectMapper objectMapper;
 
-    public NoteController(NoteService noteService, ExportService exportService, ObjectMapper objectMapper) {
+    public NoteController(NoteService noteService, ExportService exportService, ImportService importService, ObjectMapper objectMapper) {
         this.noteService = noteService;
         this.exportService = exportService;
+        this.importService = importService;
         this.objectMapper = objectMapper;
     }
 
@@ -154,5 +156,14 @@ public class NoteController {
                 )
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(bytes);
+    }
+
+    @PostMapping(value = "/import/json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<Void> importJsonNotes(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
+    ) {
+        importService.importJsonNotes(getIdFromAuthentication(authentication), file);
+        return ApiResponse.success("导入 json 笔记成功");
     }
 }

@@ -120,6 +120,18 @@ public enum ErrorCode {
             "图片节点和文件不匹配"
     ),
 
+    READ_IMPORTED_FILE_FAILED(
+            40014,
+            HttpStatus.BAD_REQUEST,
+            "读取或解析导入文件失败"
+    ),
+
+    UNSUPPORTED_VERSION(
+            40015,
+            HttpStatus.BAD_REQUEST,
+            "不支持的版本"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
