@@ -45,4 +45,7 @@ public interface DetailNodeMapper {
             where id = #{id} and directory_node_id = #{directoryNodeId} and deleted_at is null
     """)
     Optional<FetchDetailNodesResponse> getDetailNodeById(@Param("id") Long id, @Param("directoryNodeId") Long directoryNodeId);
+
+    List<ExportDetailNodeVO> getExportDetailNodesByDirectoryNodeIds(@Param("directoryNodeIds") List<Long> directoryNodeIds);
+
 }

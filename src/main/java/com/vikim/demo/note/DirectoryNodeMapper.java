@@ -84,4 +84,11 @@ public interface DirectoryNodeMapper {
             @Param("userId") Long userId,
             @Param("ids") Set<Long> ids
     );
+
+    @Select("""
+            select id as sourceId, parent_id as sourceParentId, label, x, y, node_type, created_at, updated_at
+            from directory_nodes
+            where user_id = #{user_id} and deleted_at is null
+    """)
+    List<ExportDirectoryNodeVO> getExportDirectoryNodes(@Param("user_id") Long userId);
 }

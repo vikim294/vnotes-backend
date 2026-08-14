@@ -5,12 +5,15 @@ import com.vikim.demo.common.PageResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,9 +24,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/note")
 public class NoteController {
     private final NoteService noteService;
+    private final ExportService exportService;
+    private final ObjectMapper objectMapper;
 
-    public NoteController(NoteService noteService) {
+    public NoteController(NoteService noteService, ExportService exportService, ObjectMapper objectMapper) {
         this.noteService = noteService;
+        this.exportService = exportService;
+        this.objectMapper = objectMapper;
     }
 
     private Long getIdFromAuthentication(
@@ -128,5 +135,24 @@ public class NoteController {
                         ));
         BatchUpdateDetailNodesResponse response = noteService.batchUpdateDetailNotes(getIdFromAuthentication(authentication), id, request, imageFiles);
         return ApiResponse.success(response, "批量更新详情节点成功");
+    }
+
+    @GetMapping("/export/json")
+    public ResponseEntity<byte[]> exportNotesToJson(
+            Authentication authentication
+    ){
+        ExportNotesToJsonResponse response = exportService.exportNotesToJson(getIdFromAuthentication(authentication));
+
+        byte[] bytes = objectMapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsBytes(response);
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"notes.json\""
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(bytes);
     }
 }
