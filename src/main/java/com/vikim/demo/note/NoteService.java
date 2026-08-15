@@ -271,6 +271,11 @@ public class NoteService {
         Map<UUID, UploadImageOfNodeVO> succeededImageNodes = new HashMap<>();
         List<Path> filesToBeDeletedWhenError = new ArrayList<>();
 
+        List<ImageDetailNodeResponse> imageNodesInvolved = new ArrayList<>();
+        if(!deletedIdsToBeVerified.isEmpty()) {
+            imageNodesInvolved = detailNodeMapper.getImageNodesFromIds(directoryNodeId, deletedIdsToBeVerified);
+        }
+
         try {
             // --- 先保存图片节点的图片文件
             for(BatchCreateDetailNodesDTO imageNode : imageNodes) {
@@ -319,7 +324,17 @@ public class NoteService {
             }
 
             // 再更新数据库
-            return detailNodeTransactionService.batchUpdateDetailNotesToDB(directoryNodeId, request, succeededImageNodes, deletedIdsToBeVerified);
+            BatchUpdateDetailNodesResponse response = detailNodeTransactionService.batchUpdateDetailNotesToDB(directoryNodeId, request, succeededImageNodes, deletedIdsToBeVerified);
+
+            // 删除 deleted 节点 相关图片节点对应的文件
+            List<Path> paths = imageNodesInvolved.stream().map(n -> {
+                String fileUrl = n.imageUrl().substring(n.imageUrl().indexOf("imageNodes/"));
+                Path dir = Paths.get(fileUploadProperties.uploadDir());
+                return dir.resolve(fileUrl);
+            }).toList();
+            fileService.deleteQuietly(paths);
+
+            return response;
         } catch (RuntimeException e) {
             // 清理已保存的文件
             fileService.deleteQuietly(filesToBeDeletedWhenError);

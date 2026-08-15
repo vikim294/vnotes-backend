@@ -12,7 +12,7 @@ public interface DetailNodeMapper {
     @Select("""
             select id, parent_id, directory_node_id, label, image_url, x, y, image_width, image_height, content_type, mark_type, created_at, updated_at
             from detail_nodes
-            where directory_node_id = #{directoryNodeId} and deleted_at is null
+            where directory_node_id = #{directoryNodeId}
     """)
     List<FetchDetailNodesResponse> fetchDetailNodesByDirectoryNodeId(@Param("directoryNodeId") Long directoryNodeId);
 
@@ -24,7 +24,7 @@ public interface DetailNodeMapper {
     @Update("""
         update detail_nodes
         set parent_id = #{parentId}
-        where id = #{id} and directory_node_id = #{directoryNodeId} and deleted_at is null
+        where id = #{id} and directory_node_id = #{directoryNodeId}
     """)
     int updateDetailNodeParentId(
             @Param("id") Long id,
@@ -42,11 +42,17 @@ public interface DetailNodeMapper {
     @Select("""
             select id, parent_id, directory_node_id, label, image_url, x, y, image_width, image_height, content_type, mark_type, created_at, updated_at
             from detail_nodes
-            where id = #{id} and directory_node_id = #{directoryNodeId} and deleted_at is null
+            where id = #{id} and directory_node_id = #{directoryNodeId}
     """)
     Optional<FetchDetailNodesResponse> getDetailNodeById(@Param("id") Long id, @Param("directoryNodeId") Long directoryNodeId);
 
     List<ExportDetailNodeVO> getExportDetailNodesByDirectoryNodeIds(@Param("directoryNodeIds") List<Long> directoryNodeIds);
 
     int createDetailNodeFromImport(CreateDetailNodeFromImportMapperParam param);
+
+    // 根据 ids 找出图片节点、后代图片节点
+    List<ImageDetailNodeResponse> getImageNodesFromIds(
+            @Param("directoryNodeId") Long directoryNodeId,
+            @Param("ids") Set<Long> ids
+    );
 }

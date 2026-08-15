@@ -10,7 +10,6 @@
         select count(*)
         from detail_nodes
         where directory_node_id = #{directoryNodeId}
-            and deleted_at is null
             and id in
         <foreach collection="ids"
                  item="id"
@@ -40,7 +39,7 @@
             image_height = #{imageHeight}
         </set>
 
-        where id = #{id} and directory_node_id = #{directoryNodeId} and deleted_at is null
+        where id = #{id} and directory_node_id = #{directoryNodeId}
     </update>
 
     <delete id="batchDeleteDetailNodes">
@@ -87,7 +86,7 @@
     <select id="getExportDetailNodesByDirectoryNodeIds" resultType="com.vikim.demo.note.ExportDetailNodeVO">
         select id as sourceId, parent_id as sourceParentId, directory_node_id as sourceDirectoryNodeId, label, x, y, image_width, image_height, content_type, mark_type, created_at, updated_at
         from detail_nodes
-        where deleted_at is null and directory_node_id in
+        where directory_node_id in
         <foreach collection="directoryNodeIds" item="directoryNodeId" separator="," open="(" close=")">
             #{directoryNodeId}
         </foreach>
@@ -127,4 +126,63 @@
             #{updatedAt},
         </trim>
     </insert>
+
+    <select id="getImageNodesFromIds" resultType="com.vikim.demo.note.ImageDetailNodeResponse">
+        WITH RECURSIVE tree AS (
+            SELECT
+                id,
+                parent_id,
+                directory_node_id,
+                image_url,
+                x,
+                y,
+                image_width,
+                image_height,
+                content_type,
+                created_at,
+                updated_at
+            FROM detail_nodes
+            WHERE directory_node_id = #{directoryNodeId} and id in
+                <foreach collection="ids"
+                         item="detailNodeId"
+                         open="("
+                         separator=","
+                         close=")">
+                    #{detailNodeId}
+                </foreach>
+
+            UNION DISTINCT
+
+            SELECT
+                dn.id,
+                dn.parent_id,
+                dn.directory_node_id,
+                dn.image_url,
+                dn.x,
+                dn.y,
+                dn.image_width,
+                dn.image_height,
+                dn.content_type,
+                dn.created_at,
+                dn.updated_at
+            FROM detail_nodes dn
+            JOIN tree ON dn.parent_id = tree.id
+            where dn.directory_node_id = #{directoryNodeId}
+        )
+
+        SELECT
+            id,
+            parent_id,
+            directory_node_id,
+            image_url,
+            x,
+            y,
+            image_width,
+            image_height,
+            created_at,
+            updated_at
+        FROM tree
+        WHERE content_type = 'IMAGE' and image_url is not null
+        """)
+    </select>
 </mapper>
