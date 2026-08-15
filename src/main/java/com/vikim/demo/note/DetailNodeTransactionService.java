@@ -110,15 +110,9 @@ public class DetailNodeTransactionService {
             }
         }
 
-        // 软删除 deletedNodeIds 节点
+        // 硬删除 deletedNodeIds 节点
         if(!deletedIdsToBeVerified.isEmpty()) {
-            int affectedRows = detailNodeMapper.batchDeleteDetailNodes(directoryNodeId, deletedIdsToBeVerified);
-            // 删除一个孤立节点 -> 二者相等
-            // 删除一个有后代的节点 -> affectedRows > size
-            // 所以这里的判断不能用 !=
-            if(affectedRows < deletedIdsToBeVerified.size()) {
-                throw new BusinessException(ErrorCode.DETAIL_NODE_BATCH_DELETE_FAILED);
-            }
+            detailNodeMapper.batchDeleteDetailNodes(directoryNodeId, deletedIdsToBeVerified);
         }
 
         return new BatchUpdateDetailNodesResponse(uuidToId);

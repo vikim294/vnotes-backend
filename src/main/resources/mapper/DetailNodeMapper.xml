@@ -43,35 +43,13 @@
         where id = #{id} and directory_node_id = #{directoryNodeId} and deleted_at is null
     </update>
 
-    <update id="batchDeleteDetailNodes">
-        with recursive subtree (id) as (
-        select id
-        from detail_nodes
-        where directory_node_id = #{directoryNodeId}
-        and deleted_at is null
-        and id in
-        <foreach collection="ids"
-                 item="id"
-                 open="("
-                 separator=","
-                 close=")">
-            #{id}
+    <delete id="batchDeleteDetailNodes">
+        delete from detail_nodes
+        where directory_node_id = #{directoryNodeId} and id in
+        <foreach collection="ids" item="detailNodeId" separator="," open="(" close=")">
+            #{detailNodeId}
         </foreach>
-
-        union distinct
-
-        select child.id
-        from detail_nodes child
-        join subtree parent
-        on child.parent_id = parent.id
-        where child.directory_node_id = #{directoryNodeId}
-        )
-        update detail_nodes node
-        join subtree
-        on subtree.id = node.id
-        set node.deleted_at = current_timestamp(6)
-        where node.deleted_at is null
-    </update>
+    </delete>
 
     <insert id="createDetailNode" useGeneratedKeys="true" keyProperty="id">
 
