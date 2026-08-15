@@ -19,6 +19,10 @@ public class CreateDetailNodeFromImportMapperParam {
 
     private BigDecimal y;
 
+    private BigDecimal imageWidth;
+
+    private BigDecimal imageHeight;
+
     private DetailNodeContentType contentType;
 
     private DetailNodeMarkType markType;
@@ -27,12 +31,14 @@ public class CreateDetailNodeFromImportMapperParam {
 
     private LocalDateTime updatedAt;
 
-    public CreateDetailNodeFromImportMapperParam(Long directoryNodeId, Long parentId, String label , BigDecimal x, BigDecimal y, DetailNodeContentType contentType, DetailNodeMarkType markType, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public CreateDetailNodeFromImportMapperParam(Long directoryNodeId, Long parentId, String label , BigDecimal x, BigDecimal y, BigDecimal imageWidth, BigDecimal imageHeight, DetailNodeContentType contentType, DetailNodeMarkType markType, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.directoryNodeId = directoryNodeId;
         this.parentId = parentId;
         this.label = label;
         this.x = x;
         this.y = y;
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
         this.contentType = contentType;
         this.markType = markType;
         this.createdAt = createdAt;

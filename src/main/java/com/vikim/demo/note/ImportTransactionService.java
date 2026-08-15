@@ -67,6 +67,8 @@ public class ImportTransactionService {
                         detailNode.label(),
                         detailNode.x(),
                         detailNode.y(),
+                        detailNode.imageWidth(),
+                        detailNode.imageHeight(),
                         detailNode.contentType(),
                         detailNode.markType(),
                         detailNode.createdAt(),

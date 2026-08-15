@@ -107,7 +107,7 @@
     </insert>
 
     <select id="getExportDetailNodesByDirectoryNodeIds" resultType="com.vikim.demo.note.ExportDetailNodeVO">
-        select id as sourceId, parent_id as sourceParentId, directory_node_id as sourceDirectoryNodeId, label, x, y, content_type, mark_type, created_at, updated_at
+        select id as sourceId, parent_id as sourceParentId, directory_node_id as sourceDirectoryNodeId, label, x, y, image_width, image_height, content_type, mark_type, created_at, updated_at
         from detail_nodes
         where deleted_at is null and directory_node_id in
         <foreach collection="directoryNodeIds" item="directoryNodeId" separator="," open="(" close=")">
@@ -125,6 +125,8 @@
             label,
             x,
             y,
+            image_width,
+            image_height,
             content_type,
             mark_type,
             created_at,
@@ -139,6 +141,8 @@
             #{label},
             #{x},
             #{y},
+            #{imageWidth},
+            #{imageHeight},
             #{contentType},
             #{markType},
             #{createdAt},

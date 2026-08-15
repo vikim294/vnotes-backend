@@ -10,6 +10,8 @@ public record ImportDetailNodeDTO(
         String label,
         BigDecimal x,
         BigDecimal y,
+        BigDecimal imageWidth,
+        BigDecimal imageHeight,
         DetailNodeContentType contentType,
         DetailNodeMarkType markType,
         LocalDateTime createdAt,
