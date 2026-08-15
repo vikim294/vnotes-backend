@@ -68,6 +68,13 @@ public interface DirectoryNodeMapper {
     );
 
     @Update("""
+            update directory_nodes
+            set deleted_at = current_timestamp(6)
+            where user_id = #{userId} and deleted_at is null
+            """)
+    int deleteAllDirectoryNodes(@Param("userId") Long userId);
+
+    @Update("""
         update directory_nodes
         set parent_id = #{parentId}
         where id = #{id} and user_id = #{userId} and deleted_at is null

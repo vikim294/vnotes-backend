@@ -18,9 +18,10 @@ import java.util.Map;
 public class ImportService {
     private final ObjectMapper objectMapper;
     private final ImportTransactionService importTransactionService;
+    private final DirectoryNodeMapper directoryNodeMapper;
 
     @Transactional
-    public void importJsonNotes(Long userId, MultipartFile file) {
+    public void importJsonNotes(Long userId, ImportStrategy strategy, MultipartFile file) {
         ImportJsonNotesDTO data = null;
 
         try {
@@ -39,6 +40,11 @@ public class ImportService {
 
         if(data.directoryNodes() == null || data.detailNodes() == null) {
             throw new BusinessException(ErrorCode.READ_IMPORTED_FILE_FAILED);
+        }
+
+        // 如果 strategy 是 clear，先删除用户所有笔记
+        if(strategy == ImportStrategy.CLEAR) {
+            directoryNodeMapper.deleteAllDirectoryNodes(userId);
         }
 
         // 构建 map，加速“从 list 中遍历找 parentId 的子节点”

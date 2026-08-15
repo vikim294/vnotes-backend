@@ -161,9 +161,10 @@ public class NoteController {
     @PostMapping(value = "/import/json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<Void> importJsonNotes(
             Authentication authentication,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "strategy", defaultValue = "APPEND") ImportStrategy strategy
     ) {
-        importService.importJsonNotes(getIdFromAuthentication(authentication), file);
+        importService.importJsonNotes(getIdFromAuthentication(authentication), strategy, file);
         return ApiResponse.success("导入 json 笔记成功");
     }
 }
