@@ -183,6 +183,5 @@
             updated_at
         FROM tree
         WHERE content_type = 'IMAGE' and image_url is not null
-        """)
     </select>
 </mapper>
