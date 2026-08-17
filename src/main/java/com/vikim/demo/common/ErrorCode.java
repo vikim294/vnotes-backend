@@ -132,6 +132,12 @@ public enum ErrorCode {
             "不支持的版本"
     ),
 
+    TOO_MANY_REQUESTS(
+            40016,
+            HttpStatus.TOO_MANY_REQUESTS,
+            "请求过于频繁"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
