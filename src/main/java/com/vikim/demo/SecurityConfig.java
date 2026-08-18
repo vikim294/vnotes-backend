@@ -37,7 +37,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/auth/login",
+                                "/auth/login/email-password",
+                                "/auth/send-verification-code",
+                                "/auth/login/email-verification-code",
                                 "/user/register"
                         ).permitAll()
                         .requestMatchers(

@@ -14,10 +14,25 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/login")
-    public ApiResponse<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request
+    @PostMapping("/login/email-password")
+    public ApiResponse<LoginResponse> loginByEmailAndPassword(
+            @Valid @RequestBody LoginByEmailAndPasswordRequest request
     ) {
-        return ApiResponse.success(authService.login(request), "登录成功");
+        return ApiResponse.success(authService.loginByEmailAndPassword(request), "登录成功");
+    }
+
+    @PostMapping("/send-verification-code")
+    public ApiResponse<Void> sendVerificationCode(
+            @Valid @RequestBody SendVerificationCodeRequest request
+    ) {
+        authService.sendVerificationCode(request);
+        return ApiResponse.success("发送验证码成功");
+    }
+
+    @PostMapping("/login/email-verification-code")
+    public ApiResponse<LoginResponse> loginByEmailAndVerificationCode(
+            @Valid @RequestBody LoginByEmailAndVerificationCodeRequest request
+    ) {
+        return ApiResponse.success(authService.loginByEmailAndVerificationCode(request), "登录成功");
     }
 }

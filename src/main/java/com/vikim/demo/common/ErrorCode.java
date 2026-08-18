@@ -138,6 +138,12 @@ public enum ErrorCode {
             "请求过于频繁"
     ),
 
+    INVALID_EMAIL_OR_VERIFICATION_CODE(
+            40017,
+            HttpStatus.UNAUTHORIZED,
+            "无效的邮箱或验证码"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -214,6 +220,11 @@ public enum ErrorCode {
             "文件目录创建失败"
     ),
 
+    EMAIL_SENDING_FAILED(
+            50015,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "邮件发送失败"
+    ),
 
     ;
 
