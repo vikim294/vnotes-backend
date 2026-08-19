@@ -226,6 +226,18 @@ public enum ErrorCode {
             "邮件发送失败"
     ),
 
+    DIRECTORY_NODE_UPDATED_ORIGINAL_PARENT_ID_FAILED(
+            50016,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "目录节点更新 original parent id 失败"
+    ),
+
+    DIRECTORY_NODE_UPDATED_DELETED_AT_AND_DELETED_ROOT_ID_FAILED(
+            50017,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "目录节点更新 deleted at 或 deleted root id 失败"
+    ),
+
     ;
 
     private final int code;

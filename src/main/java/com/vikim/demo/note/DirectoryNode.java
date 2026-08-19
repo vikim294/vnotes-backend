@@ -14,4 +14,6 @@ public class DirectoryNode {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    private Long originalParentId;
+    private Long deletedRootId;
 }

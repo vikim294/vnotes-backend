@@ -37,33 +37,29 @@
         </foreach>
     </select>
 
-    <update id="batchDeleteDirectoryNodes">
+    <update id="batchDeleteDirectoryNodeSubTree">
         with recursive subtree (id) as (
-        select id
-        from directory_nodes
-        where user_id = #{userId}
-        and deleted_at is null
-        and id in
-        <foreach collection="ids"
-                 item="id"
-                 open="("
-                 separator=","
-                 close=")">
-            #{id}
-        </foreach>
+            select id
+            from directory_nodes
+            where user_id = #{userId}
+            and deleted_at is null
+            and id = #{id}
 
-        union distinct
+            union distinct
 
-        select child.id
-        from directory_nodes child
-        join subtree parent
-        on child.parent_id = parent.id
-        where child.user_id = #{userId}
+            select child.id
+            from directory_nodes child
+            join subtree parent
+            on child.parent_id = parent.id
+            where child.user_id = #{userId}
+                and child.deleted_at is null
         )
         update directory_nodes node
         join subtree
         on subtree.id = node.id
-        set node.deleted_at = current_timestamp(6)
+        set
+            node.deleted_at = current_timestamp(6),
+            node.deleted_root_id = #{id}
         where node.deleted_at is null
     </update>
 
@@ -109,4 +105,46 @@
         <include refid="searchDirectoryNodesConditions"/>
     </select>
 
+    <sql id="searchDirectoryNodesInTrashBinConditions">
+        <where>
+            and user_id = #{userId}
+            and deleted_at is not null
+            and deleted_root_id = id
+
+            <if test="keyword != null and keyword != ''">
+                and label like concat('%', #{keyword}, '%')
+            </if>
+
+            <if test="nodeType != null">
+                and node_type = #{nodeType}
+            </if>
+
+            <if test="startTime != null">
+                and deleted_at >= #{startTime}
+            </if>
+
+            <if test="endTime != null">
+                and deleted_at &lt; #{endTime}
+            </if>
+        </where>
+    </sql>
+
+    <select id="searchDirectoryNodesInTrashBin" resultType="com.vikim.demo.note.SearchDirectoryNodesInTrashBinResponse">
+        select id, label, x, y, node_type, created_at, updated_at, deleted_at
+        from directory_nodes
+
+        <include refid="searchDirectoryNodesInTrashBinConditions"/>
+
+        order by deleted_at desc, id desc
+
+        limit #{limit}
+        offset #{offset}
+    </select>
+
+    <select id="countDirectoryNodesInTrashBin" resultType="int">
+        select count(*)
+        from directory_nodes
+
+        <include refid="searchDirectoryNodesInTrashBinConditions"/>
+    </select>
 </mapper>

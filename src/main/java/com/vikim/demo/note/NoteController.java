@@ -85,13 +85,32 @@ public class NoteController {
         return ApiResponse.success(noteService.searchDirectoryNodes(getIdFromAuthentication(authentication), keyword, pageSize, page, nodeType, startTime, endTime), "搜索笔记目录成功");
     }
 
-    @DeleteMapping("/directory/{id}")
-    public ApiResponse<Void> deleteDirectoryNode(
+    @GetMapping("/directory/trash-bin/search")
+    public ApiResponse<PageResponse<SearchDirectoryNodesInTrashBinResponse>> searchDirectoryNodesInTrashBin(
             Authentication authentication,
-            @PathVariable("id") Long id
+
+            @RequestParam(value = "keyword", required = false)
+            String keyword,
+
+            @RequestParam(value = "pageSize", defaultValue = "10")
+            @Min(value = 1, message = "pageSize 不能小于 1")
+            @Max(value = 100, message = "pageSize 不能大于 100")
+            int pageSize,
+
+            @Min(value = 1, message = "page 不能小于 1")
+            @RequestParam(value = "page", defaultValue = "1")
+            int page,
+
+            @RequestParam(value = "nodeType", required = false)
+            NodeType nodeType,
+
+            @RequestParam(value = "startTime", required = false)
+            LocalDateTime startTime,
+
+            @RequestParam(value = "endTime", required = false)
+            LocalDateTime endTime
     ) {
-        noteService.deleteDirectoryNode(id, getIdFromAuthentication(authentication));
-        return ApiResponse.success("删除目录节点成功");
+        return ApiResponse.success(noteService.searchDirectoryNodesInTrashBin(getIdFromAuthentication(authentication), keyword, pageSize, page, nodeType, startTime, endTime), "搜索回收站笔记目录成功");
     }
 
     @PatchMapping("/directory/batch")

@@ -41,40 +41,6 @@ public interface DirectoryNodeMapper {
     int countActiveDirectoryNodesByIds(@Param("userId") Long userId, @Param("ids") Set<Long> ids);
 
     @Update("""
-        with recursive subtree (id) as (
-            select id
-            from directory_nodes
-            where id = #{id}
-              and user_id = #{userId}
-              and deleted_at is null
-
-            union all
-
-            select child.id
-            from directory_nodes child
-            join subtree parent
-              on child.parent_id = parent.id
-            where child.user_id = #{userId}
-        )
-        update directory_nodes node
-        join subtree
-          on subtree.id = node.id
-        set node.deleted_at = current_timestamp(6)
-        where node.deleted_at is null
-        """)
-    int deleteDirectoryNode(
-            @Param("id") Long id,
-            @Param("userId") Long userId
-    );
-
-    @Update("""
-            update directory_nodes
-            set deleted_at = current_timestamp(6)
-            where user_id = #{userId} and deleted_at is null
-            """)
-    int deleteAllDirectoryNodes(@Param("userId") Long userId);
-
-    @Update("""
         update directory_nodes
         set parent_id = #{parentId}
         where id = #{id} and user_id = #{userId} and deleted_at is null
@@ -85,11 +51,22 @@ public interface DirectoryNodeMapper {
             @Param("parentId") Long parentId
     );
 
+    @Update("""
+        update directory_nodes
+        set original_parent_id = #{originalParentId}
+        where id = #{id} and user_id = #{userId} and deleted_at is null
+    """)
+    int updateDirectoryNodeOriginalParentId(
+            @Param("id") Long id,
+            @Param("userId") Long userId,
+            @Param("originalParentId") Long originalParentId
+    );
+
     int updateDirectoryNode(UpdateDirectoryNodeMapperParam param);
 
-    int batchDeleteDirectoryNodes(
+    int batchDeleteDirectoryNodeSubTree(
             @Param("userId") Long userId,
-            @Param("ids") Set<Long> ids
+            @Param("id") Long id
     );
 
     @Select("""
@@ -108,4 +85,8 @@ public interface DirectoryNodeMapper {
             keyProperty = "id"
     )
     int createDirectoryNodeFromImport(CreateDirectoryNodeFromImportMapperParam param);
+
+    List<SearchDirectoryNodesInTrashBinResponse> searchDirectoryNodesInTrashBin(SearchDirectoryNodeInTrashBinMapperParam param);
+
+    int countDirectoryNodesInTrashBin(SearchDirectoryNodeInTrashBinMapperParam param);
 }

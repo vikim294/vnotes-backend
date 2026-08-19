@@ -1,6 +1,7 @@
 package com.vikim.demo.note;
 
 import com.vikim.demo.common.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,20 +15,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class NoteService {
     private final DirectoryNodeMapper directoryNodeMapper;
     private final DetailNodeMapper detailNodeMapper;
     private final FileService fileService;
     private final FileUploadProperties fileUploadProperties;
     private final DetailNodeTransactionService detailNodeTransactionService;
-
-    public NoteService(DirectoryNodeMapper directoryNodeMapper, DetailNodeMapper detailNodeMapper, FileService fileService, FileUploadProperties fileUploadProperties, DetailNodeTransactionService detailNodeTransactionService) {
-        this.directoryNodeMapper = directoryNodeMapper;
-        this.detailNodeMapper = detailNodeMapper;
-        this.fileService = fileService;
-        this.fileUploadProperties = fileUploadProperties;
-        this.detailNodeTransactionService = detailNodeTransactionService;
-    }
+    private final NoteTransactionService noteTransactionService;
 
     public Long createDirectoryNode(Long userId, CreateDirectoryNodeRequest request) {
         if (request.parentId() != null && !directoryNodeMapper.hasDirectoryNode(userId, request.parentId(), NodeType.DIRECTORY)) {
@@ -55,11 +50,13 @@ public class NoteService {
         return new PageResponse<>(responses, page, pageSize, total);
     }
 
-    public void deleteDirectoryNode(Long id, Long userId) {
-        int affectedRows = directoryNodeMapper.deleteDirectoryNode(id, userId);
-        if (affectedRows == 0) {
-            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
-        }
+    public PageResponse<SearchDirectoryNodesInTrashBinResponse> searchDirectoryNodesInTrashBin(Long userId, String keyword, int pageSize, int page, NodeType nodeType, LocalDateTime startTime, LocalDateTime endTime) {
+        SearchDirectoryNodeInTrashBinMapperParam param = new SearchDirectoryNodeInTrashBinMapperParam(userId, keyword, pageSize, (page - 1) * pageSize, nodeType, startTime, endTime);
+
+        List<SearchDirectoryNodesInTrashBinResponse> responses = directoryNodeMapper.searchDirectoryNodesInTrashBin(param);
+        int total = directoryNodeMapper.countDirectoryNodesInTrashBin(param);
+
+        return new PageResponse<>(responses, page, pageSize, total);
     }
 
     @Transactional
@@ -171,16 +168,8 @@ public class NoteService {
             }
         }
 
-        // 软删除 deletedNodeIds 节点
-        if(!deletedIdsToBeVerified.isEmpty()) {
-            int affectedRows = directoryNodeMapper.batchDeleteDirectoryNodes(userId, deletedIdsToBeVerified);
-            // 删除一个孤立节点 -> 二者相等
-            // 删除一个有后代的节点 -> affectedRows > size
-            // 所以这里的判断不能用 !=
-            if(affectedRows < deletedIdsToBeVerified.size()) {
-                throw new BusinessException(ErrorCode.DIRECTORY_NODE_BATCH_DELETE_FAILED);
-            }
-        }
+        // 处理 deletedNodeIds
+        noteTransactionService.softDeleteDirectoryNodesByIds(userId, deletedIdsToBeVerified);
 
         return new BatchUpdateDirectoryNodesResponse(uuidToId);
     }

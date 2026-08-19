@@ -8,16 +8,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ImportService {
     private final ObjectMapper objectMapper;
     private final ImportTransactionService importTransactionService;
+    private final NoteTransactionService noteTransactionService;
     private final DirectoryNodeMapper directoryNodeMapper;
 
     @Transactional
@@ -26,25 +25,30 @@ public class ImportService {
 
         try {
             data = objectMapper.readValue(
-                            file.getInputStream(),
-                            ImportJsonNotesDTO.class
-                    );
+                    file.getInputStream(),
+                    ImportJsonNotesDTO.class
+            );
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.READ_IMPORTED_FILE_FAILED);
         }
 
         // TODO 校验
-        if(!"1".equals(data.version())) {
+        if (!"1".equals(data.version())) {
             throw new BusinessException(ErrorCode.UNSUPPORTED_VERSION);
         }
 
-        if(data.directoryNodes() == null || data.detailNodes() == null) {
+        if (data.directoryNodes() == null || data.detailNodes() == null) {
             throw new BusinessException(ErrorCode.READ_IMPORTED_FILE_FAILED);
         }
 
         // 如果 strategy 是 clear，先删除用户所有笔记
-        if(strategy == ImportStrategy.CLEAR) {
-            directoryNodeMapper.deleteAllDirectoryNodes(userId);
+        if (strategy == ImportStrategy.CLEAR) {
+            List<FetchDirectoryNodesResponse> allDirectoryNodes = directoryNodeMapper.fetchAllDirectoryNodes(userId);
+            Set<Long> allDirectoryNodeIds = allDirectoryNodes.stream()
+                    .map(FetchDirectoryNodesResponse::id)
+                    .collect(Collectors.toSet());
+
+            noteTransactionService.softDeleteDirectoryNodesByIds(userId, allDirectoryNodeIds);
         }
 
         // 构建 map，加速“从 list 中遍历找 parentId 的子节点”
