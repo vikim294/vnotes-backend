@@ -186,4 +186,13 @@ public class NoteController {
         importService.importJsonNotes(getIdFromAuthentication(authentication), strategy, file);
         return ApiResponse.success("导入 json 笔记成功");
     }
+
+    @PatchMapping("/directory/trash-bin/batch-restore")
+    public ApiResponse<Void> restoreDirectoryNodesFromTrashBinByIds(
+            Authentication authentication,
+            @Valid @RequestBody IdsRequest request
+    ) {
+        noteService.restoreDirectoryNodesFromTrashBinByIds(getIdFromAuthentication(authentication), request);
+        return ApiResponse.success("批量恢复目录节点成功");
+    }
 }

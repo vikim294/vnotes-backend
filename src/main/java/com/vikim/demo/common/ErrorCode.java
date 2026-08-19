@@ -176,6 +176,12 @@ public enum ErrorCode {
             "批量删除目录节点失败"
     ),
 
+    DIRECTORY_NODE_BATCH_RESTORE_FAILED(
+            50008,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "批量恢复目录节点失败"
+    ),
+
     DETAIL_NODE_CREATED_FAILED(
             50007,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -236,6 +242,12 @@ public enum ErrorCode {
             50017,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "目录节点更新 deleted at 或 deleted root id 失败"
+    ),
+
+    DIRECTORY_NODE_RESTORE_PARENT_FAILED(
+            50018,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "目录节点恢复 parent id失败"
     ),
 
     ;

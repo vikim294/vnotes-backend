@@ -26,8 +26,8 @@
         select count(*)
         from directory_nodes
         where user_id = #{userId}
-            and deleted_at is null
-            and id in
+        and deleted_at is null
+        and id in
         <foreach collection="ids"
                  item="id"
                  open="("
@@ -39,28 +39,38 @@
 
     <update id="batchDeleteDirectoryNodeSubTree">
         with recursive subtree (id) as (
-            select id
-            from directory_nodes
-            where user_id = #{userId}
-            and deleted_at is null
-            and id = #{id}
+        select id
+        from directory_nodes
+        where user_id = #{userId}
+        and deleted_at is null
+        and id = #{id}
 
-            union distinct
+        union distinct
 
-            select child.id
-            from directory_nodes child
-            join subtree parent
-            on child.parent_id = parent.id
-            where child.user_id = #{userId}
-                and child.deleted_at is null
+        select child.id
+        from directory_nodes child
+        join subtree parent
+        on child.parent_id = parent.id
+        where child.user_id = #{userId}
+        and child.deleted_at is null
         )
         update directory_nodes node
         join subtree
         on subtree.id = node.id
         set
-            node.deleted_at = current_timestamp(6),
-            node.deleted_root_id = #{id}
+        node.deleted_at = current_timestamp(6),
+        node.deleted_root_id = #{id}
         where node.deleted_at is null
+    </update>
+
+    <update id="batchRestoreDirectoryNodeSubTree">
+        update directory_nodes
+        set
+            deleted_at = null,
+            deleted_root_id = null
+        where deleted_at is not null and
+            user_id = #{userId} and
+            deleted_root_id = #{id}
     </update>
 
     <sql id="searchDirectoryNodesConditions">
@@ -146,5 +156,33 @@
         from directory_nodes
 
         <include refid="searchDirectoryNodesInTrashBinConditions"/>
+    </select>
+
+    <select id="findDeletedRootNodesByIds" resultType="com.vikim.demo.note.FindDeletedRootNodesByIdsResponse">
+        select id, original_parent_id
+        from directory_nodes
+        where user_id = #{userId} and
+        deleted_at is not null and
+        id = deleted_root_id and
+        id in
+        <foreach
+                collection="ids"
+                item="id"
+                open="("
+                separator=","
+                close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="hasDirectoryNode" resultType="boolean">
+        select exists(
+            select 1
+            from directory_nodes
+            where user_id = #{userId} and
+                id = #{id} and
+                deleted_at is null and
+                node_type = #{nodeType}
+        )
     </select>
 </mapper>

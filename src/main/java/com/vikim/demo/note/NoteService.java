@@ -79,12 +79,12 @@ public class NoteService {
         parentIdsToBeVerified.addAll(parentIdsFromUpdated);
 
         // 校验 parentId 都是用户自己的
-        if(!parentIdsToBeVerified.isEmpty() && parentIdsToBeVerified.size() != directoryNodeMapper.countActiveDirectoryNodesByIds(userId, parentIdsToBeVerified)) {
+        if (!parentIdsToBeVerified.isEmpty() && parentIdsToBeVerified.size() != directoryNodeMapper.countActiveDirectoryNodesByIds(userId, parentIdsToBeVerified)) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_PARENT_VALIDATION_FAILED);
         }
 
         // 校验 deletedNodeIds 都是用户自己的
-        if(!deletedIdsToBeVerified.isEmpty() && deletedIdsToBeVerified.size() != directoryNodeMapper.countActiveDirectoryNodesByIds(userId, deletedIdsToBeVerified)) {
+        if (!deletedIdsToBeVerified.isEmpty() && deletedIdsToBeVerified.size() != directoryNodeMapper.countActiveDirectoryNodesByIds(userId, deletedIdsToBeVerified)) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
 
@@ -209,19 +209,19 @@ public class NoteService {
         parentIdsToBeVerified.addAll(parentIdsFromUpdated);
 
         // 校验 parentId 都是用户自己的
-        if(!parentIdsToBeVerified.isEmpty() && parentIdsToBeVerified.size() != detailNodeMapper.countActiveDetailNodesByIds(directoryNodeId, parentIdsToBeVerified)) {
+        if (!parentIdsToBeVerified.isEmpty() && parentIdsToBeVerified.size() != detailNodeMapper.countActiveDetailNodesByIds(directoryNodeId, parentIdsToBeVerified)) {
             throw new BusinessException(ErrorCode.DETAIL_NODE_PARENT_VALIDATION_FAILED);
         }
 
         // 校验 deletedNodeIds 都是用户自己的
-        if(!deletedIdsToBeVerified.isEmpty() && deletedIdsToBeVerified.size() != detailNodeMapper.countActiveDetailNodesByIds(directoryNodeId, deletedIdsToBeVerified)) {
+        if (!deletedIdsToBeVerified.isEmpty() && deletedIdsToBeVerified.size() != detailNodeMapper.countActiveDetailNodesByIds(directoryNodeId, deletedIdsToBeVerified)) {
             throw new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND);
         }
 
         for (BatchCreateDetailNodesDTO addedNode : request.added()) {
             // 校验：added 的文本节点对应的 label 是否为空
-            if(addedNode.getContentType() == DetailNodeContentType.TEXT) {
-                if(addedNode.getLabel() == null || addedNode.getLabel().trim().isBlank()) {
+            if (addedNode.getContentType() == DetailNodeContentType.TEXT) {
+                if (addedNode.getLabel() == null || addedNode.getLabel().trim().isBlank()) {
                     throw new BusinessException(ErrorCode.TEXT_NODE_LABEL_IS_NULL);
                 }
             }
@@ -240,11 +240,11 @@ public class NoteService {
                                             ErrorCode.DETAIL_NODE_NOT_FOUND
                                     )
                             );
-             if(existingNode.contentType() == DetailNodeContentType.TEXT) {
-                 if(updatedNode.getLabel() == null || updatedNode.getLabel().trim().isBlank()) {
-                     throw new BusinessException(ErrorCode.TEXT_NODE_LABEL_IS_NULL);
-                 }
-             }
+            if (existingNode.contentType() == DetailNodeContentType.TEXT) {
+                if (updatedNode.getLabel() == null || updatedNode.getLabel().trim().isBlank()) {
+                    throw new BusinessException(ErrorCode.TEXT_NODE_LABEL_IS_NULL);
+                }
+            }
         }
 
         List<BatchCreateDetailNodesDTO> imageNodes = request.added().stream().filter(node -> node.getContentType() == DetailNodeContentType.IMAGE).toList();
@@ -261,16 +261,16 @@ public class NoteService {
         List<Path> filesToBeDeletedWhenError = new ArrayList<>();
 
         List<ImageDetailNodeResponse> imageNodesInvolved = new ArrayList<>();
-        if(!deletedIdsToBeVerified.isEmpty()) {
+        if (!deletedIdsToBeVerified.isEmpty()) {
             imageNodesInvolved = detailNodeMapper.getImageNodesFromIds(directoryNodeId, deletedIdsToBeVerified);
         }
 
         try {
             // --- 先保存图片节点的图片文件
-            for(BatchCreateDetailNodesDTO imageNode : imageNodes) {
+            for (BatchCreateDetailNodesDTO imageNode : imageNodes) {
                 MultipartFile file = files.get("file." + imageNode.getUuid());
 
-                if(file.isEmpty()) {
+                if (file.isEmpty()) {
                     throw new BusinessException(ErrorCode.FILE_IS_NOT_PRESENT);
                 }
 
@@ -328,6 +328,36 @@ public class NoteService {
             // 清理已保存的文件
             fileService.deleteQuietly(filesToBeDeletedWhenError);
             throw e;
+        }
+    }
+
+    @Transactional
+    public void restoreDirectoryNodesFromTrashBinByIds(Long userId, IdsRequest request) {
+        // 找出所有 ids 节点
+        List<FindDeletedRootNodesByIdsResponse> nodes = directoryNodeMapper.findDeletedRootNodesByIds(userId, request.ids());
+
+        if (nodes.size() != request.ids().size()) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED);
+        }
+
+        // 必须先把所有待恢复节点及子节点的 deletedAt 更新为 null
+        for (FindDeletedRootNodesByIdsResponse node : nodes) {
+            // 更新 id 和其后代节点的 deletedAt 和 deletedRootId 为 null
+            if (directoryNodeMapper.batchRestoreDirectoryNodeSubTree(userId, node.id()) < 1) {
+                throw new BusinessException(ErrorCode.DIRECTORY_NODE_BATCH_RESTORE_FAILED);
+            }
+        }
+
+        // 然后再处理 originalParentId -> parentId 的更新
+        for (FindDeletedRootNodesByIdsResponse node : nodes) {
+            // 根据 original parent id 存在性
+            if (node.originalParentId() != null) {
+                Long parentId = directoryNodeMapper.hasDirectoryNode(userId, node.originalParentId(), NodeType.DIRECTORY) ? node.originalParentId() : null;
+                // 更新节点 id 的 parentId、original parent id 更新为 null
+                if (directoryNodeMapper.restoreDirectoryNodeParent(node.id(), userId, parentId) != 1) {
+                    throw new BusinessException(ErrorCode.DIRECTORY_NODE_RESTORE_PARENT_FAILED);
+                }
+            }
         }
     }
 }

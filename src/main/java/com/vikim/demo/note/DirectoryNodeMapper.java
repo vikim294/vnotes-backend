@@ -29,13 +29,6 @@ public interface DirectoryNodeMapper {
 
     int countDirectoryNodes(SearchDirectoryNodeMapperParam param);
 
-    @Select("""
-        select exists(
-            select 1
-            from directory_nodes
-            where user_id = #{userId} and id = #{id} and node_type = #{nodeType} and deleted_at is null
-        )
-    """)
     boolean hasDirectoryNode(@Param("userId") Long userId, @Param("id") Long id, @Param("nodeType") NodeType nodeType);
 
     int countActiveDirectoryNodesByIds(@Param("userId") Long userId, @Param("ids") Set<Long> ids);
@@ -62,9 +55,27 @@ public interface DirectoryNodeMapper {
             @Param("originalParentId") Long originalParentId
     );
 
+    @Update("""
+        update directory_nodes
+        set
+            parent_id = #{parentId},
+            original_parent_id = null
+        where id = #{id} and user_id = #{userId} and deleted_at is null
+    """)
+    int restoreDirectoryNodeParent(
+            @Param("id") Long id,
+            @Param("userId") Long userId,
+            @Param("parentId") Long parentId
+    );
+
     int updateDirectoryNode(UpdateDirectoryNodeMapperParam param);
 
     int batchDeleteDirectoryNodeSubTree(
+            @Param("userId") Long userId,
+            @Param("id") Long id
+    );
+
+    int batchRestoreDirectoryNodeSubTree(
             @Param("userId") Long userId,
             @Param("id") Long id
     );
@@ -89,4 +100,6 @@ public interface DirectoryNodeMapper {
     List<SearchDirectoryNodesInTrashBinResponse> searchDirectoryNodesInTrashBin(SearchDirectoryNodeInTrashBinMapperParam param);
 
     int countDirectoryNodesInTrashBin(SearchDirectoryNodeInTrashBinMapperParam param);
+
+    List<FindDeletedRootNodesByIdsResponse> findDeletedRootNodesByIds(@Param("userId") Long userId, @Param("ids") Set<Long> ids);
 }
