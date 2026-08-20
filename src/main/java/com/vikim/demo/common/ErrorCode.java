@@ -250,6 +250,12 @@ public enum ErrorCode {
             "目录节点恢复 parent id失败"
     ),
 
+    DIRECTORY_NODE_HARD_DELETE_FAILED(
+            50019,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "硬删除目录节点失败"
+    ),
+
     ;
 
     private final int code;

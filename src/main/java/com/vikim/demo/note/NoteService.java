@@ -316,12 +316,7 @@ public class NoteService {
             BatchUpdateDetailNodesResponse response = detailNodeTransactionService.batchUpdateDetailNotesToDB(directoryNodeId, request, succeededImageNodes, deletedIdsToBeVerified);
 
             // 删除 deleted 节点 相关图片节点对应的文件
-            List<Path> paths = imageNodesInvolved.stream().map(n -> {
-                String fileUrl = n.imageUrl().substring(n.imageUrl().indexOf("imageNodes/"));
-                Path dir = Paths.get(fileUploadProperties.uploadDir());
-                return dir.resolve(fileUrl);
-            }).toList();
-            fileService.deleteQuietly(paths);
+            deleteFilesOfImageNodes(imageNodesInvolved.stream().map(ImageDetailNodeResponse::imageUrl).toList());
 
             return response;
         } catch (RuntimeException e) {
@@ -359,5 +354,21 @@ public class NoteService {
                 }
             }
         }
+    }
+
+    public void hardDeleteFromTrashBin(Long userId, IdsRequest request){
+        List<FindImageNodesByDirectoryNodesWithDetailResponse> imageNodesInvolved = noteTransactionService.hardDeleteRootNodesFromTrashBin(userId, request.ids());
+
+        deleteFilesOfImageNodes(imageNodesInvolved.stream().map(FindImageNodesByDirectoryNodesWithDetailResponse::imageUrl).toList());
+    }
+
+    // 删除图片节点对应的文件
+    private void deleteFilesOfImageNodes(List<String> imageUrls) {
+        List<Path> paths = imageUrls.stream().map(url -> {
+            String fileUrl = url.substring(url.indexOf("imageNodes/"));
+            Path dir = Paths.get(fileUploadProperties.uploadDir());
+            return dir.resolve(fileUrl);
+        }).toList();
+        fileService.deleteQuietly(paths);
     }
 }

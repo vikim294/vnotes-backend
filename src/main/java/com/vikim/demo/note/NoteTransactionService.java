@@ -7,12 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class NoteTransactionService {
     private final DirectoryNodeMapper directoryNodeMapper;
+    private final DetailNodeMapper detailNodeMapper;
 
     @Transactional
     public void softDeleteDirectoryNodesByIds(Long userId, Set<Long> ids) {
@@ -61,5 +61,37 @@ public class NoteTransactionService {
                 throw new BusinessException(ErrorCode.DIRECTORY_NODE_UPDATED_DELETED_AT_AND_DELETED_ROOT_ID_FAILED);
             }
         }
+    }
+
+    @Transactional
+    public List<FindImageNodesByDirectoryNodesWithDetailResponse> hardDeleteRootNodesFromTrashBin(Long userId, Set<Long> ids){
+        // 校验 DeletedRootNodes
+        List<FindDeletedRootNodesByIdsResponse> nodes = directoryNodeMapper.findDeletedRootNodesByIds(userId, ids);
+        if (nodes.size() != ids.size()) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED);
+        }
+
+        List<FindImageNodesByDirectoryNodesWithDetailResponse> allImageNodes = new ArrayList<>();
+
+        for(Long id: ids) {
+            // 找出节点 id 及子树中 所有带详情的目录节点
+            List<Long> directoryNodesWithDetailIds = directoryNodeMapper.findDirectoryNodesWithDetailByRootId(userId, id);
+
+            if(!directoryNodesWithDetailIds.isEmpty()) {
+                // 找出下面的图片节点
+                List<FindImageNodesByDirectoryNodesWithDetailResponse> imageNodes = detailNodeMapper.findImageNodesByDirectoryNodesWithDetail(directoryNodesWithDetailIds);
+                allImageNodes.addAll(imageNodes);
+
+                // 删除下面的详情节点
+                detailNodeMapper.deleteDetailNodesOfDirectoryRootNodes(directoryNodesWithDetailIds);
+            }
+
+            // 删除 root node 目录节点
+            if (directoryNodeMapper.deleteRootNodeFromTrashBin(userId, id) != 1) {
+                throw new BusinessException(ErrorCode.DIRECTORY_NODE_HARD_DELETE_FAILED);
+            }
+        }
+
+        return allImageNodes;
     }
 }

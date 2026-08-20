@@ -195,4 +195,13 @@ public class NoteController {
         noteService.restoreDirectoryNodesFromTrashBinByIds(getIdFromAuthentication(authentication), request);
         return ApiResponse.success("批量恢复目录节点成功");
     }
+
+    @PostMapping("/directory/trash-bin/batch-delete")
+    public ApiResponse<Void> hardDeleteFromTrashBin(
+            Authentication authentication,
+            @Valid @RequestBody IdsRequest request
+    ) {
+        noteService.hardDeleteFromTrashBin(getIdFromAuthentication(authentication), request);
+        return ApiResponse.success("批量彻底删除成功");
+    }
 }

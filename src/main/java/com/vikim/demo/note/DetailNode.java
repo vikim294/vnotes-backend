@@ -17,5 +17,4 @@ public class DetailNode {
     private DetailNodeMarkType markType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 }

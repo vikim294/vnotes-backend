@@ -102,4 +102,22 @@ public interface DirectoryNodeMapper {
     int countDirectoryNodesInTrashBin(SearchDirectoryNodeInTrashBinMapperParam param);
 
     List<FindDeletedRootNodesByIdsResponse> findDeletedRootNodesByIds(@Param("userId") Long userId, @Param("ids") Set<Long> ids);
+
+    @Delete("""
+            delete from directory_nodes
+            where user_id = #{userId} and
+                deleted_at is not null and
+                id = #{id}
+    """)
+    int deleteRootNodeFromTrashBin(@Param("userId") Long userId, @Param("id") Long id);
+
+    @Select("""
+             select id
+                from directory_nodes
+                where user_id = #{userId} and
+                    deleted_at is not null and
+                    deleted_root_id = #{id} and
+                    node_type = 'DETAIL'
+            """)
+    List<Long> findDirectoryNodesWithDetailByRootId(@Param("userId") Long userId, @Param("id") Long id);
 }

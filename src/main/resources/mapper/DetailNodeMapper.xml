@@ -184,4 +184,31 @@
         FROM tree
         WHERE content_type = 'IMAGE' and image_url is not null
     </select>
+
+    <delete id="deleteDetailNodesOfDirectoryRootNodes">
+        delete from detail_nodes
+        where directory_node_id in
+        <foreach collection="ids"
+                 item="directoryNodeWithDetailId"
+                 open="("
+                 separator=","
+                 close=")">
+            #{directoryNodeWithDetailId}
+        </foreach>
+    </delete>
+
+    <select id="findImageNodesByDirectoryNodesWithDetail" resultType="com.vikim.demo.note.FindImageNodesByDirectoryNodesWithDetailResponse">
+        select id, image_url
+        from detail_nodes
+        where content_type = 'IMAGE' and
+            image_url is not null and
+            directory_node_id in
+            <foreach collection="ids"
+                     item="directoryNodeWithDetailId"
+                     open="("
+                     separator=","
+                     close=")">
+                #{directoryNodeWithDetailId}
+            </foreach>
+    </select>
 </mapper>

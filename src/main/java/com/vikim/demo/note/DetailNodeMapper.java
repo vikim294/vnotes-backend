@@ -55,4 +55,8 @@ public interface DetailNodeMapper {
             @Param("directoryNodeId") Long directoryNodeId,
             @Param("ids") Set<Long> ids
     );
+
+    int deleteDetailNodesOfDirectoryRootNodes(@Param("ids") List<Long> ids);
+
+    List<FindImageNodesByDirectoryNodesWithDetailResponse> findImageNodesByDirectoryNodesWithDetail(@Param("ids") List<Long> ids);
 }
