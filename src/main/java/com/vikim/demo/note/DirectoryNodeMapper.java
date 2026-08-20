@@ -120,4 +120,13 @@ public interface DirectoryNodeMapper {
                     node_type = 'DETAIL'
             """)
     List<Long> findDirectoryNodesWithDetailByRootId(@Param("userId") Long userId, @Param("id") Long id);
+
+    @Select("""
+             select user_id, id as deleted_root_id
+                from directory_nodes
+                where deleted_at is not null and
+                    deleted_root_id = id and
+                    deleted_at < date_sub(now(), interval 30 day)
+            """)
+    List<FindAllUsersAndDeletedRootNotesVO> findAllUsersAndDeletedRootNotes();
 }

@@ -94,4 +94,33 @@ public class NoteTransactionService {
 
         return allImageNodes;
     }
+
+    @Transactional
+    public CleanUpDeletedRootNodesResponse cleanUpDeletedRootNodes(){
+        List<FindImageNodesByDirectoryNodesWithDetailResponse> allImageNodes = new ArrayList<>();
+
+        // 找出所有 deletedRootNotes 和 对应 user
+        List<FindAllUsersAndDeletedRootNotesVO> usersAndDeletedRootNotes = directoryNodeMapper.findAllUsersAndDeletedRootNotes();
+
+        for(FindAllUsersAndDeletedRootNotesVO item: usersAndDeletedRootNotes) {
+            // 找出节点 id 及子树中 所有带详情的目录节点
+            List<Long> directoryNodesWithDetailIds = directoryNodeMapper.findDirectoryNodesWithDetailByRootId(item.userId(), item.deletedRootId());
+
+            if(!directoryNodesWithDetailIds.isEmpty()) {
+                // 找出下面的图片节点
+                List<FindImageNodesByDirectoryNodesWithDetailResponse> imageNodes = detailNodeMapper.findImageNodesByDirectoryNodesWithDetail(directoryNodesWithDetailIds);
+                allImageNodes.addAll(imageNodes);
+
+                // 删除下面的详情节点
+                detailNodeMapper.deleteDetailNodesOfDirectoryRootNodes(directoryNodesWithDetailIds);
+            }
+
+            // 删除 root node 目录节点
+            if (directoryNodeMapper.deleteRootNodeFromTrashBin(item.userId(), item.deletedRootId()) != 1) {
+                throw new BusinessException(ErrorCode.DIRECTORY_NODE_HARD_DELETE_FAILED);
+            }
+        }
+
+        return new CleanUpDeletedRootNodesResponse(allImageNodes, usersAndDeletedRootNotes.size());
+    }
 }

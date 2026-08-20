@@ -371,4 +371,12 @@ public class NoteService {
         }).toList();
         fileService.deleteQuietly(paths);
     }
+
+    public CleanUpDeletedRootNodesResponse cleanUpDeletedRootNodes(){
+        CleanUpDeletedRootNodesResponse response = noteTransactionService.cleanUpDeletedRootNodes();
+
+        deleteFilesOfImageNodes(response.imageNodes().stream().map(FindImageNodesByDirectoryNodesWithDetailResponse::imageUrl).toList());
+
+        return response;
+    }
 }
