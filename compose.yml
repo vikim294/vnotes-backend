@@ -1,0 +1,76 @@
+# 本地 docker compose 配置
+services:
+
+  app:
+    # 根据 dockerfile 构建镜像，构建上下文是本地目录
+    build: .
+    # 本机和容器端口映射
+    ports:
+      - "8080:8080"
+
+    # 环境变量
+    environment:
+      # host 应该是 docker network 中的服务名 mysql, redis
+      DB_URL: jdbc:mysql://mysql:3306/java-demo
+      REDIS_HOST: redis
+      # 容器内图片上传目录
+      UPLOAD_DIR: /app/uploads
+
+    # 加载 .env 环境变量，覆盖优先级低于 environment 中声明的环境变量
+    env_file:
+      - .env
+
+    # 容器内目录 /app/uploads 持久化到本机 ./uploads 目录
+    volumes:
+      - ./uploads:/app/uploads
+
+    # 先启动依赖的容器，并且要健康检查通过
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  mysql:
+    # 用官方的镜像
+    image: mysql:8.4
+
+    # mysql 官方镜像第一次启动时，会读取这些变量
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: java-demo
+
+    # 容器内目录 /var/lib/mysql 持久化到 docker 管理的 volume mysql-data
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+# 声明 docker 管理的 volume
+volumes:
+  mysql-data:
