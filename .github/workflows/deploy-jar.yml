@@ -1,10 +1,8 @@
-name: Deploy VNotes Backend
+name: Deploy - Legacy Jar
 
 on:
-  push:
-    branches:
-      - main
-
+  # 改为手动触发
+  workflow_dispatch:
 
 jobs:
 

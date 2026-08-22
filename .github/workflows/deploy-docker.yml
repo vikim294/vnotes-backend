@@ -1,0 +1,96 @@
+name: Deploy - Docker
+
+on:
+  # 自动触发
+  push:
+    branches:
+      - main
+
+# 新的 push 的 workflow 会导致旧 workflow 取消，避免竞态
+concurrency:
+  group: vnotes-production
+  cancel-in-progress: true
+
+# push 镜像到 ghcr 需要 permissions
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+
+  build-and-deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # GitHub runner 拉代码
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      # 跳过测试，打 jar
+      - name: skip test and package
+        run: |
+          ./mvnw clean package -DskipTests
+
+      # 登录 ghcr
+      - name: Log in to github container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 根据 dockerfile + jar 构建 image（latest 用于上线、github.sha 用于方便回滚）
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ghcr.io/${{ github.repository_owner }}/vnotes:latest \
+            -t ghcr.io/${{ github.repository_owner }}/vnotes:${{ github.sha }} \
+            .
+
+      # push 镜像到 ghcr
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/vnotes:latest
+          docker push ghcr.io/${{ github.repository_owner }}/vnotes:${{ github.sha }}
+
+      # ssh 到 vps
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            
+            cd /opt/vnotes
+            
+            export APP_IMAGE_TAG=${{ github.sha }}
+            
+            docker compose pull app
+            docker compose up -d app
+
+            for attempt in $(seq 1 12); do
+              if curl -fsS http://127.0.0.1:8080/health; then
+                echo "Health check passed"
+                exit 0
+              fi
+
+              echo "Waiting for application: ${attempt}/12"
+              sleep 5
+            done
+
+            echo "Vnotes failed to become healthy..."
+            
+            docker compose logs --tail=100 app
+           
+            exit 1
