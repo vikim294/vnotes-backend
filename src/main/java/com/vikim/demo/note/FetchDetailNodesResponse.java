@@ -1,7 +1,8 @@
 package com.vikim.demo.note;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
 public record FetchDetailNodesResponse(
         Long id,
@@ -15,8 +16,24 @@ public record FetchDetailNodesResponse(
         BigDecimal imageHeight,
         DetailNodeContentType contentType,
         DetailNodeMarkType markType,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
-
+    static FetchDetailNodesResponse from(FetchDetailNodesRow row){
+        return new FetchDetailNodesResponse(
+                row.id(),
+                row.parentId(),
+                row.directoryNodeId(),
+                row.label(),
+                row.imageUrl(),
+                row.x(),
+                row.y(),
+                row.imageWidth(),
+                row.imageHeight(),
+                row.contentType(),
+                row.markType(),
+                row.createdAt().toInstant(ZoneOffset.UTC),
+                row.updatedAt().toInstant(ZoneOffset.UTC)
+        );
+    }
 }

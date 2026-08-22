@@ -14,7 +14,7 @@ public interface DetailNodeMapper {
             from detail_nodes
             where directory_node_id = #{directoryNodeId}
     """)
-    List<FetchDetailNodesResponse> fetchDetailNodesByDirectoryNodeId(@Param("directoryNodeId") Long directoryNodeId);
+    List<FetchDetailNodesRow> fetchDetailNodesByDirectoryNodeId(@Param("directoryNodeId") Long directoryNodeId);
 
 
     int countActiveDetailNodesByIds(@Param("directoryNodeId") Long directoryNodeId, @Param("ids") Set<Long> ids);
@@ -44,7 +44,7 @@ public interface DetailNodeMapper {
             from detail_nodes
             where id = #{id} and directory_node_id = #{directoryNodeId}
     """)
-    Optional<FetchDetailNodesResponse> getDetailNodeById(@Param("id") Long id, @Param("directoryNodeId") Long directoryNodeId);
+    Optional<FetchDetailNodesRow> getDetailNodeById(@Param("id") Long id, @Param("directoryNodeId") Long directoryNodeId);
 
     List<ExportDetailNodeVO> getExportDetailNodesByDirectoryNodeIds(@Param("directoryNodeIds") List<Long> directoryNodeIds);
 

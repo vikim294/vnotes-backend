@@ -23,9 +23,9 @@ public interface DirectoryNodeMapper {
             from directory_nodes dn
             where dn.user_id = #{user_id} and dn.deleted_at is null
     """)
-    List<FetchDirectoryNodesResponse> fetchAllDirectoryNodes(@Param("user_id") Long userId);
+    List<DirectoryNodeRow> fetchAllDirectoryNodes(@Param("user_id") Long userId);
 
-    List<FetchDirectoryNodesResponse> searchDirectoryNodes(SearchDirectoryNodeMapperParam param);
+    List<DirectoryNodeRow> searchDirectoryNodes(SearchDirectoryNodeMapperParam param);
 
     int countDirectoryNodes(SearchDirectoryNodeMapperParam param);
 
@@ -97,7 +97,7 @@ public interface DirectoryNodeMapper {
     )
     int createDirectoryNodeFromImport(CreateDirectoryNodeFromImportMapperParam param);
 
-    List<SearchDirectoryNodesInTrashBinResponse> searchDirectoryNodesInTrashBin(SearchDirectoryNodeInTrashBinMapperParam param);
+    List<SearchDirectoryNodesInTrashBinRow> searchDirectoryNodesInTrashBin(SearchDirectoryNodeInTrashBinMapperParam param);
 
     int countDirectoryNodesInTrashBin(SearchDirectoryNodeInTrashBinMapperParam param);
 

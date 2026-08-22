@@ -21,9 +21,9 @@ public class NoteTransactionService {
 
         // 先构建 id -> parentId map
         Map<Long, Long> idToParentId = new HashMap<>();
-        List<FetchDirectoryNodesResponse> allDirectoryNodes = directoryNodeMapper.fetchAllDirectoryNodes(userId);
+        List<DirectoryNodeRow> allDirectoryNodes = directoryNodeMapper.fetchAllDirectoryNodes(userId);
 
-        for (FetchDirectoryNodesResponse node : allDirectoryNodes) {
+        for (DirectoryNodeRow node : allDirectoryNodes) {
             idToParentId.put(node.id(), node.parentId());
         }
 

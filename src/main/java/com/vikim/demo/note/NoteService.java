@@ -38,13 +38,15 @@ public class NoteService {
     }
 
     public List<FetchDirectoryNodesResponse> fetchAllDirectoryNodes(Long userId) {
-        return directoryNodeMapper.fetchAllDirectoryNodes(userId);
+        return directoryNodeMapper.fetchAllDirectoryNodes(userId).stream()
+                .map(FetchDirectoryNodesResponse::from).toList();
     }
 
     public PageResponse<FetchDirectoryNodesResponse> searchDirectoryNodes(Long userId, String keyword, int pageSize, int page, NodeType nodeType, LocalDateTime startTime, LocalDateTime endTime) {
         SearchDirectoryNodeMapperParam param = new SearchDirectoryNodeMapperParam(userId, keyword, pageSize, (page - 1) * pageSize, nodeType, startTime, endTime);
 
-        List<FetchDirectoryNodesResponse> responses = directoryNodeMapper.searchDirectoryNodes(param);
+        List<FetchDirectoryNodesResponse> responses = directoryNodeMapper.searchDirectoryNodes(param).stream()
+                .map(FetchDirectoryNodesResponse::from).toList();
         int total = directoryNodeMapper.countDirectoryNodes(param);
 
         return new PageResponse<>(responses, page, pageSize, total);
@@ -53,7 +55,8 @@ public class NoteService {
     public PageResponse<SearchDirectoryNodesInTrashBinResponse> searchDirectoryNodesInTrashBin(Long userId, String keyword, int pageSize, int page, NodeType nodeType, LocalDateTime startTime, LocalDateTime endTime) {
         SearchDirectoryNodeInTrashBinMapperParam param = new SearchDirectoryNodeInTrashBinMapperParam(userId, keyword, pageSize, (page - 1) * pageSize, nodeType, startTime, endTime);
 
-        List<SearchDirectoryNodesInTrashBinResponse> responses = directoryNodeMapper.searchDirectoryNodesInTrashBin(param);
+        List<SearchDirectoryNodesInTrashBinResponse> responses = directoryNodeMapper.searchDirectoryNodesInTrashBin(param).stream()
+                .map(SearchDirectoryNodesInTrashBinResponse::from).toList();
         int total = directoryNodeMapper.countDirectoryNodesInTrashBin(param);
 
         return new PageResponse<>(responses, page, pageSize, total);
@@ -180,7 +183,8 @@ public class NoteService {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
 
-        return detailNodeMapper.fetchDetailNodesByDirectoryNodeId(directoryNodeId);
+        return detailNodeMapper.fetchDetailNodesByDirectoryNodeId(directoryNodeId).stream()
+                .map(FetchDetailNodesResponse::from).toList();
     }
 
     public BatchUpdateDetailNodesResponse batchUpdateDetailNotes(
@@ -229,7 +233,7 @@ public class NoteService {
 
         for (BatchUpdateDetailNodesDTO updatedNode : request.updated()) {
             // 校验：updated 的文本节点对应的 label 是否为空
-            FetchDetailNodesResponse existingNode =
+            FetchDetailNodesRow existingNode =
                     detailNodeMapper
                             .getDetailNodeById(
                                     updatedNode.getId(),

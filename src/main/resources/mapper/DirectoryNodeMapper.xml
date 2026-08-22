@@ -96,7 +96,7 @@
         </where>
     </sql>
 
-    <select id="searchDirectoryNodes" resultType="com.vikim.demo.note.FetchDirectoryNodesResponse">
+    <select id="searchDirectoryNodes" resultType="com.vikim.demo.note.DirectoryNodeRow">
         select id, parent_id, label, x, y, node_type, created_at, updated_at
         from directory_nodes
 
@@ -139,7 +139,7 @@
         </where>
     </sql>
 
-    <select id="searchDirectoryNodesInTrashBin" resultType="com.vikim.demo.note.SearchDirectoryNodesInTrashBinResponse">
+    <select id="searchDirectoryNodesInTrashBin" resultType="com.vikim.demo.note.SearchDirectoryNodesInTrashBinRow">
         select id, label, x, y, node_type, created_at, updated_at, deleted_at
         from directory_nodes
 

@@ -43,9 +43,9 @@ public class ImportService {
 
         // 如果 strategy 是 clear，先删除用户所有笔记
         if (strategy == ImportStrategy.CLEAR) {
-            List<FetchDirectoryNodesResponse> allDirectoryNodes = directoryNodeMapper.fetchAllDirectoryNodes(userId);
+            List<DirectoryNodeRow> allDirectoryNodes = directoryNodeMapper.fetchAllDirectoryNodes(userId);
             Set<Long> allDirectoryNodeIds = allDirectoryNodes.stream()
-                    .map(FetchDirectoryNodesResponse::id)
+                    .map(DirectoryNodeRow::id)
                     .collect(Collectors.toSet());
 
             noteTransactionService.softDeleteDirectoryNodesByIds(userId, allDirectoryNodeIds);
