@@ -65,7 +65,7 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173", "http://vnotes.site", "http://www.vnotes.site")
+                List.of("http://localhost:5173", "https://vnotes.site", "https://www.vnotes.site")
         );
 
         configuration.setAllowedMethods(
