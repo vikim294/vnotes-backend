@@ -144,6 +144,12 @@ public enum ErrorCode {
             "无效的邮箱或验证码"
     ),
 
+    OLD_AND_DEST_DIRECTORY_NODES_ARE_SAME_CODE(
+            40018,
+            HttpStatus.BAD_REQUEST,
+            "新目录节点不能是旧目录节点"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -254,6 +260,12 @@ public enum ErrorCode {
             50019,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "硬删除目录节点失败"
+    ),
+
+    DETAIL_NODE_MOVE_FAILED(
+            50020,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "移动详情节点失败"
     ),
 
     ;

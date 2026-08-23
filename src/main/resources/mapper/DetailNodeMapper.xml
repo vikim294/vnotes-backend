@@ -211,4 +211,46 @@
                 #{directoryNodeWithDetailId}
             </foreach>
     </select>
+
+    <update id="moveDetailNode">
+        WITH RECURSIVE tree AS (
+            SELECT
+                id
+            FROM detail_nodes
+            WHERE directory_node_id = #{oldDirectoryNodeId} and id = #{detailNodeId}
+
+            UNION ALL
+
+            SELECT
+                dn.id
+            FROM detail_nodes dn
+            JOIN tree ON dn.parent_id = tree.id
+            where dn.directory_node_id = #{oldDirectoryNodeId}
+        )
+
+        update detail_nodes
+
+        <set>
+            directory_node_id = #{destDirectoryNodeId},
+            x = case
+                when id = #{detailNodeId} then 0
+                else x - #{offsetX}
+            end,
+
+            y = case
+                when id = #{detailNodeId} then 0
+                else y - #{offsetY}
+            end,
+
+            parent_id = case
+                when id = #{detailNodeId} then null
+                else parent_id
+            end
+        </set>
+
+        where id in (
+            select id
+            from tree
+        )
+    </update>
 </mapper>

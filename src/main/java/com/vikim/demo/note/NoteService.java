@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -382,5 +383,37 @@ public class NoteService {
         deleteFilesOfImageNodes(response.imageNodes().stream().map(FindImageNodesByDirectoryNodesWithDetailResponse::imageUrl).toList());
 
         return response;
+    }
+
+    // 移动 DETAIL 目录节点 A 下的详情节点 X（包括后代节点）
+    // 到 DETAIL 目录节点 B 下，作为一个独立节点/树
+    @Transactional
+    public void moveDetailNode(Long userId, Long detailNodeId, Long oldDirectoryNodeId, Long destDirectoryNodeId){
+        if(Objects.equals(oldDirectoryNodeId, destDirectoryNodeId)) {
+            throw new BusinessException(ErrorCode.OLD_AND_DEST_DIRECTORY_NODES_ARE_SAME_CODE);
+        }
+
+        // 校验用户有该 oldDirectoryNode
+        if(!directoryNodeMapper.hasDirectoryNode(userId, oldDirectoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 校验用户有该详情节点
+        FetchDetailNodesRow detailNodesRow = detailNodeMapper.getDetailNodeById(detailNodeId, oldDirectoryNodeId)
+                .orElseThrow(()->new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND));
+
+        // 校验用户有该 destDirectoryNode
+        if(!directoryNodeMapper.hasDirectoryNode(userId, destDirectoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 更新 X 和所有后代的 directory_node_id 和 x/y，并更新 X 的 parentId 为 null
+        BigDecimal offsetX = detailNodesRow.x();
+        BigDecimal offsetY = detailNodesRow.y();
+
+        int affectedRows = detailNodeMapper.moveDetailNode(detailNodeId, oldDirectoryNodeId, destDirectoryNodeId, offsetX, offsetY);
+        if(affectedRows < 1) {
+            throw new BusinessException(ErrorCode.DETAIL_NODE_MOVE_FAILED);
+        }
     }
 }

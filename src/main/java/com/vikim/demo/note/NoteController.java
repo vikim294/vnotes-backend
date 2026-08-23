@@ -204,4 +204,14 @@ public class NoteController {
         noteService.hardDeleteFromTrashBin(getIdFromAuthentication(authentication), request);
         return ApiResponse.success("批量彻底删除成功");
     }
+
+    @PostMapping("/directory/{id}/detail-nodes/move")
+    public ApiResponse<Void> moveDetailNode(
+            Authentication authentication,
+            @PathVariable("id") Long oldDirectoryNodeId,
+            @Valid @RequestBody MoveDetailNodeRequest request
+    ) {
+        noteService.moveDetailNode(getIdFromAuthentication(authentication), request.detailNodeId(), oldDirectoryNodeId, request.destDirectoryNodeId());
+        return ApiResponse.success("移动详情节点成功");
+    }
 }

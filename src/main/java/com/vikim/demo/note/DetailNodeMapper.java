@@ -2,6 +2,7 @@ package com.vikim.demo.note;
 
 import org.apache.ibatis.annotations.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -59,4 +60,6 @@ public interface DetailNodeMapper {
     int deleteDetailNodesOfDirectoryRootNodes(@Param("ids") List<Long> ids);
 
     List<FindImageNodesByDirectoryNodesWithDetailResponse> findImageNodesByDirectoryNodesWithDetail(@Param("ids") List<Long> ids);
+
+    int moveDetailNode(@Param("detailNodeId") Long detailNodeId, @Param("oldDirectoryNodeId") Long oldDirectoryNodeId, @Param("destDirectoryNodeId") Long destDirectoryNodeId, @Param("offsetX") BigDecimal offsetX, @Param("offsetY") BigDecimal offsetY);
 }
