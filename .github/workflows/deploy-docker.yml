@@ -86,7 +86,7 @@ jobs:
               fi
 
               echo "Waiting for application: ${attempt}/12"
-              sleep 5
+              sleep 10
             done
 
             echo "Vnotes failed to become healthy..."
