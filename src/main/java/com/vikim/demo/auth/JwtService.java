@@ -23,14 +23,14 @@ public class JwtService {
         this.properties = properties;
     }
 
-    public LoginResponse generateAccessToken(User user) {
+    public LoginResponse generateAccessToken(Long userId) {
         Instant issuedAt = Instant.now();
         Instant expiresAt =
                 issuedAt.plus(properties.accessTokenTtl());
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(properties.issuer())
-                .subject(user.getId().toString())
+                .subject(userId.toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .id(UUID.randomUUID().toString())

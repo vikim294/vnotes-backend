@@ -45,7 +45,7 @@ public class AuthService {
         }
 
         // 生成并返回 token
-        return jwtService.generateAccessToken(user);
+        return jwtService.generateAccessToken(user.getId());
     }
 
     private String generateCode() {
@@ -101,6 +101,6 @@ public class AuthService {
         loginVerificationCodeService.clearVerificationCode(user.getId());
 
         // 生成并返回 token
-        return jwtService.generateAccessToken(user);
+        return jwtService.generateAccessToken(user.getId());
     }
 }

@@ -40,12 +40,14 @@ public class SecurityConfig {
                                 "/auth/login/email-password",
                                 "/auth/send-verification-code",
                                 "/auth/login/email-verification-code",
-                                "/user/register"
+                                "/user/register",
+                                "/oauth/token"
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/health",
-                                "/uploads/**"
+                                "/uploads/**",
+                                "/oauth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

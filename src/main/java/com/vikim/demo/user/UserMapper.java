@@ -42,4 +42,11 @@ public interface UserMapper {
             where id = #{userId}
             """)
     Optional<UserProfileResponse> getProfile(@Param("userId") Long userId);
+
+    @Insert("""
+            insert into users(username)
+            values('new user')
+            """)
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    int createUserForOAuthAccount(CreateUserForOAuthAccountParam param);
 }

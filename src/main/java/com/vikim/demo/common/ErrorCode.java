@@ -150,6 +150,12 @@ public enum ErrorCode {
             "新目录节点不能是旧目录节点"
     ),
 
+    OAUTH_LOGIN_CODE_INVALID_OR_EXPIRED(
+            40019,
+            HttpStatus.BAD_REQUEST,
+            "无效的 code"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -266,6 +272,18 @@ public enum ErrorCode {
             50020,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "移动详情节点失败"
+    ),
+
+    USER_CREATED_FAILED(
+            50021,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "用户创建失败"
+    ),
+
+    OAUTH_ACCOUNT_CREATED_FAILED(
+            50022,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "OAuth account 创建失败"
     ),
 
     ;
