@@ -286,6 +286,12 @@ public enum ErrorCode {
             "OAuth account 创建失败"
     ),
 
+    UPLOAD_OBJECT_STORAGE_FAILED(
+            50023,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "上传对象存储失败"
+    ),
+
     ;
 
     private final int code;

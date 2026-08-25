@@ -3,6 +3,7 @@ package com.vikim.demo.user;
 
 import com.vikim.demo.common.ApiResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -13,21 +14,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
 
     private Long getIdFromAuthentication(
             Authentication authentication
     ) {
         return Long.valueOf(authentication.getName());
     }
-
 
     @GetMapping
     public ApiResponse<List<UserResponse>> findAll() {
@@ -53,6 +49,8 @@ public class UserController {
             Authentication authentication,
             @RequestParam("file") MultipartFile file
     ) {
-        return ApiResponse.success(userService.uploadAvatar(getIdFromAuthentication(authentication), file), "上传头像成功");
+        UploadAvatarResponse response = userService.uploadAvatarToObjectStorage(getIdFromAuthentication(authentication), file);
+        return ApiResponse.success(response, "上传头像成功");
     }
+
 }
