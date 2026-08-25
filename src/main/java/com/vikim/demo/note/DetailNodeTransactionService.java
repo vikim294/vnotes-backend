@@ -5,10 +5,7 @@ import com.vikim.demo.common.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class DetailNodeTransactionService {
@@ -21,7 +18,7 @@ public class DetailNodeTransactionService {
 
     // 插入、更新 数据库操作
     @Transactional
-    public BatchUpdateDetailNodesResponse batchUpdateDetailNotesToDB(
+    public BatchUpdateDetailNodesTransactionResult batchUpdateDetailNotesToDB(
             Long directoryNodeId,
             BatchUpdateDetailNodesRequest request,
             Map<UUID, UploadImageOfNodeVO> succeededImageNodes,
@@ -110,11 +107,18 @@ public class DetailNodeTransactionService {
             }
         }
 
-        // 硬删除 deletedNodeIds 节点
+        List<String> deletedImageObjectKeys = new ArrayList<>();
+
         if(!deletedIdsToBeVerified.isEmpty()) {
+            // 查最新的、涉及的图片节点
+            deletedImageObjectKeys = detailNodeMapper.getImageNodesFromIds(directoryNodeId, deletedIdsToBeVerified).stream()
+                    .map(ImageDetailNodeResponse::imageUrl)
+                    .toList();
+
+            // 硬删除 deletedNodeIds 节点
             detailNodeMapper.batchDeleteDetailNodes(directoryNodeId, deletedIdsToBeVerified);
         }
 
-        return new BatchUpdateDetailNodesResponse(uuidToId);
+        return new BatchUpdateDetailNodesTransactionResult(new BatchUpdateDetailNodesResponse(uuidToId), deletedImageObjectKeys);
     }
 }

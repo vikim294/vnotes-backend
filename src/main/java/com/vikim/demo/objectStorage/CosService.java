@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.time.Duration;
 import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -62,7 +63,7 @@ public class CosService implements ObjectStorageService {
 
     // 抛异常时，吞掉，只记录日志
     @Override
-    public void deleteQuietly( String objectKey){
+    public void deleteQuietly(String objectKey){
         try {
             cosClient.deleteObject(
                     properties.bucket(),
@@ -75,7 +76,13 @@ public class CosService implements ObjectStorageService {
                     e
             );
         }
+    }
 
+    @Override
+    public void deleteQuietly(List<String> objectKeys) {
+        for(String key: objectKeys) {
+            deleteQuietly(key);
+        }
     }
 
     // 生成用来临时访问的 url（因为我创建的桶是私有读写，所以只用对象存储域名 + 资源 key 会“访问无权限”）

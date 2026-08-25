@@ -3,6 +3,7 @@ package com.vikim.demo.objectStorage;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
+import java.util.List;
 
 public interface ObjectStorageService {
 
@@ -14,6 +15,8 @@ public interface ObjectStorageService {
     void delete(String objectKey);
 
     void deleteQuietly(String objectKey);
+
+    void deleteQuietly(List<String> objectKeys);
 
     String generatePresignedUrl(String key, Duration duration);
 
