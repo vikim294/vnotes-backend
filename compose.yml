@@ -1,4 +1,12 @@
 # 本地 docker compose 配置
+
+# YAML anchor 避免重复
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
 services:
 
   app:
@@ -20,6 +28,8 @@ services:
     env_file:
       - .env
 
+    logging: *default-logging
+
     # 容器内目录 /app/uploads 持久化到本机 ./uploads 目录
     volumes:
       - ./uploads:/app/uploads
@@ -39,6 +49,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: java-demo
+
+    logging: *default-logging
 
     # 容器内目录 /var/lib/mysql 持久化到 docker 管理的 volume mysql-data
     volumes:
@@ -70,6 +82,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+    logging: *default-logging
 
 # 声明 docker 管理的 volume
 volumes:
