@@ -47,7 +47,8 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/health",
                                 "/uploads/**",
-                                "/oauth/**"
+                                "/oauth/**",
+                                "/mq/test"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

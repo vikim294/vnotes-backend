@@ -85,6 +85,20 @@ services:
 
     logging: *default-logging
 
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: vnotes-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: vnotes
+      RABBITMQ_DEFAULT_PASS: vnotes123
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
 # 声明 docker 管理的 volume
 volumes:
   mysql-data:
+  rabbitmq-data:
