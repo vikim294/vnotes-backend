@@ -33,5 +33,8 @@ public class MessageConsumer {
                 event.userId()
         );
 
+        throw new RuntimeException(
+                "模拟邮件服务故障"
+        );
     }
 }

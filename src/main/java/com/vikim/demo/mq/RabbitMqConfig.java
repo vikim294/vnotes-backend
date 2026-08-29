@@ -27,6 +27,38 @@ public class RabbitMqConfig {
     }
 
     @Bean
+    public DirectExchange deadLetterExchange() {
+        return ExchangeBuilder
+                .directExchange(
+                    RabbitMqConstants.DEAD_LETTER_EXCHANGE
+                )
+                .durable(true)
+                .build();
+    }
+
+    @Bean
+    public Queue emailUserDeadLetterQueue() {
+        return QueueBuilder
+                .durable(
+                        RabbitMqConstants.EMAIL_USER_DLQ
+                )
+                .build();
+    }
+
+    @Bean
+    public Binding emailUserDeadLetterBinding(
+            DirectExchange deadLetterExchange,
+            Queue emailUserDeadLetterQueue
+    ) {
+        return BindingBuilder
+                .bind(emailUserDeadLetterQueue)
+                .to(deadLetterExchange)
+                .with(
+                        RabbitMqConstants.USER_REGISTERED_FAILED_ROUTING_KEY
+                );
+    }
+
+    @Bean
     public Queue notificationUserRegisteredQueue() {
         return QueueBuilder
                 .durable(
@@ -41,11 +73,17 @@ public class RabbitMqConfig {
                 .durable(
                         RabbitMqConstants.EMAIL_USER_REGISTERED_QUEUE
                 )
+                .deadLetterExchange(
+                        RabbitMqConstants.DEAD_LETTER_EXCHANGE
+                )
+                .deadLetterRoutingKey(
+                        RabbitMqConstants.USER_REGISTERED_FAILED_ROUTING_KEY
+                )
                 .build();
     }
 
     @Bean
-    public Binding userRegisteredNotiBinding(
+    public Binding userRegisteredNotificationBinding(
             DirectExchange userExchange,
             Queue notificationUserRegisteredQueue
     ) {
