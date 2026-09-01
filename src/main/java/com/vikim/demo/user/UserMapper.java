@@ -20,7 +20,11 @@ public interface UserMapper {
         insert into users(username, password_hash, email)
         values(#{username}, #{passwordHash}, #{email})
     """)
-    int registerAccount(String username, String passwordHash, String email);
+    @Options(
+            useGeneratedKeys = true,
+            keyProperty = "id"
+    )
+    int registerAccount(RegisterAccountMapperParam param);
 
     @Select("""
             select id, username

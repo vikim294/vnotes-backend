@@ -2,6 +2,7 @@ package com.vikim.demo.user;
 
 
 import com.vikim.demo.common.*;
+import com.vikim.demo.mq.MessageProducer;
 import com.vikim.demo.objectStorage.ObjectStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ public class UserService {
     private final FileService fileService;
     private final FileUploadProperties fileUploadProperties;
     private final ObjectStorageService objectStorageService;
+    private final MessageProducer messageProducer;
 
     public List<UserResponse> findAll() {
         return userMapper.findAll().stream()
@@ -42,6 +44,7 @@ public class UserService {
                 .toList();
     }
 
+    // 用户注册成功发送站内信：先不管通过 google 登录的新用户
     public void registerAccount(RegisterAccountRequest request) {
         Optional<User> user = userMapper.findByEmail(request.email());
         if (user.isPresent()) {
@@ -50,7 +53,16 @@ public class UserService {
 
         String passwordHash = passwordEncoder.encode(request.password());
 
-        userMapper.registerAccount(request.username(), passwordHash, request.email());
+        RegisterAccountMapperParam param = new RegisterAccountMapperParam();
+        param.setUsername(request.username());
+        param.setPasswordHash(passwordHash);
+        param.setEmail(request.email());
+
+        userMapper.registerAccount(param);
+
+        // 先不管 mysql 和 mq 的一致性，之后改为 outbox
+        // 通过 mq 发送站内信
+        messageProducer.sendUserRegisteredEvent(param.getId());
     }
 
     public UploadAvatarResponse uploadAvatarLocally(Long userId, MultipartFile file) {
