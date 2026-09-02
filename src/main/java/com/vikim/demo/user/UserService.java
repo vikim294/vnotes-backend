@@ -2,18 +2,22 @@ package com.vikim.demo.user;
 
 
 import com.vikim.demo.common.*;
-import com.vikim.demo.mq.MessageProducer;
+import com.vikim.demo.mq.events.UserRegisteredEvent;
 import com.vikim.demo.objectStorage.ObjectStorageService;
+import com.vikim.demo.outbox.CreateOutboxEventMapperParam;
+import com.vikim.demo.outbox.OutboxEventMapper;
+import com.vikim.demo.outbox.OutboxEventStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,7 +32,8 @@ public class UserService {
     private final FileService fileService;
     private final FileUploadProperties fileUploadProperties;
     private final ObjectStorageService objectStorageService;
-    private final MessageProducer messageProducer;
+    private final OutboxEventMapper outboxEventMapper;
+    private final ObjectMapper objectMapper;
 
     public List<UserResponse> findAll() {
         return userMapper.findAll().stream()
@@ -45,6 +50,7 @@ public class UserService {
     }
 
     // 用户注册成功发送站内信：先不管通过 google 登录的新用户
+    @Transactional
     public void registerAccount(RegisterAccountRequest request) {
         Optional<User> user = userMapper.findByEmail(request.email());
         if (user.isPresent()) {
@@ -60,9 +66,23 @@ public class UserService {
 
         userMapper.registerAccount(param);
 
-        // 先不管 mysql 和 mq 的一致性，之后改为 outbox
-        // 通过 mq 发送站内信
-        messageProducer.sendUserRegisteredEvent(param.getId());
+        Long userId = param.getId();
+
+        // --- insert outbox_events 表，之后通过定时轮询发 mq 事件
+        String eventId = UUID.randomUUID().toString();
+
+        UserRegisteredEvent event =
+                new UserRegisteredEvent(
+                        eventId,
+                        userId
+                );
+
+        outboxEventMapper.createOutboxEvent(new CreateOutboxEventMapperParam(
+                eventId,
+                VnotesEvent.USER_REGISTERED,
+                objectMapper.writeValueAsString(event),
+                OutboxEventStatus.PENDING
+        ));
     }
 
     public UploadAvatarResponse uploadAvatarLocally(Long userId, MultipartFile file) {
@@ -165,7 +185,7 @@ public class UserService {
                 throw new BusinessException(ErrorCode.USER_NOT_FOUND);
             }
 
-            if(profileResponse.avatarUrl() != null) {
+            if (profileResponse.avatarUrl() != null) {
                 objectStorageService.deleteQuietly(profileResponse.avatarUrl());
             }
         } catch (RuntimeException e) {

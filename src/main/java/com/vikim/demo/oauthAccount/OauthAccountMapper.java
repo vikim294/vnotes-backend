@@ -1,6 +1,5 @@
 package com.vikim.demo.oauthAccount;
 
-import com.vikim.demo.user.CreateUserForOAuthAccountParam;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

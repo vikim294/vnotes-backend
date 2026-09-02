@@ -1,13 +1,64 @@
 package com.vikim.demo.mq;
 
+import com.vikim.demo.outbox.OutboxEventMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.boot.amqp.autoconfigure.RabbitTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@Slf4j
+@RequiredArgsConstructor
 public class RabbitMqConfig {
+
+    private final OutboxEventMapper outboxEventMapper;
+
+    // Spring Boot 4.1 的 rabbit template 定制（customize）入口
+    @Bean
+    public RabbitTemplateCustomizer rabbitTemplateCustomizer() {
+        return rabbitTemplate -> {
+            // 事件成功发送到 mq 到回调
+            rabbitTemplate.setConfirmCallback(
+                    (correlationData, ack, cause) -> {
+                        if (correlationData == null) {
+                            log.error("RabbitMQ publish confirm callback: correlationData is null");
+                            return;
+                        }
+
+                        String eventId = correlationData.getId();
+
+                        // ack 且没被 return 才能标记为 sent
+                        if (ack && correlationData.getReturned() == null) {
+                            log.info("RabbitMQ publish confirmed, eventId={}", eventId);
+
+                            // 更新 outbox_events 状态为 sent
+                            outboxEventMapper.markSent(eventId);
+                        } else {
+                            // nack 或 return
+                            log.error("RabbitMQ publish failed, eventId={}, ack={}, cause={}", eventId, ack, cause);
+                        }
+                    }
+            );
+
+            // 让事件在无法路由时被退回
+            rabbitTemplate.setMandatory(true);
+            // 事件退回时的回调
+            rabbitTemplate.setReturnsCallback(
+                    returned -> {
+                        log.error("RabbitMQ publish returned, exchange={}, routingKey={}, replyCode={}, replyText={}",
+                                returned.getExchange(),
+                                returned.getRoutingKey(),
+                                returned.getReplyCode(),
+                                returned.getReplyText()
+                        );
+                    }
+            );
+        };
+    }
 
     // 消息类型的序列化、反序列化
     // RabbitTemplate：Java 对象 → JSON
