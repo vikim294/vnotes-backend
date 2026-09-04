@@ -86,19 +86,8 @@ public class AuthService {
     public LoginResponse loginByEmailAndVerificationCode(LoginByEmailAndVerificationCodeRequest request) {
         User user = findUserByEmail(request.email()).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_EMAIL_OR_VERIFICATION_CODE));
 
-        // 读 redis
-        String verificationCode = loginVerificationCodeService.getVerificationCode(user.getId());
-        if (verificationCode == null) {
-            throw new BusinessException(ErrorCode.INVALID_EMAIL_OR_VERIFICATION_CODE);
-        }
-
         // 校验验证码
-        if (!verificationCode.equals(request.verificationCode())) {
-            throw new BusinessException(ErrorCode.INVALID_EMAIL_OR_VERIFICATION_CODE);
-        }
-
-        // 校验通过，清除 redis
-        loginVerificationCodeService.clearVerificationCode(user.getId());
+        loginVerificationCodeService.verify(user.getId(), request.verificationCode());
 
         // 生成并返回 token
         return jwtService.generateAccessToken(user.getId());
