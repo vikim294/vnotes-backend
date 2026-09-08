@@ -156,6 +156,12 @@ public enum ErrorCode {
             "无效的 code"
     ),
 
+    INVALID_TAGS(
+            40020,
+            HttpStatus.BAD_REQUEST,
+            "无效的 tags"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -290,6 +296,24 @@ public enum ErrorCode {
             50023,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "上传对象存储失败"
+    ),
+
+    CREATE_TAG_FAILED(
+            50024,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "创建标签失败"
+    ),
+
+    UPDATE_TAG_FAILED(
+            50025,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "更新标签失败"
+    ),
+
+    DELETE_TAG_FAILED(
+            50026,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "删除标签失败"
     ),
 
     ;

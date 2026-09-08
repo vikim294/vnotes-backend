@@ -75,34 +75,46 @@
 
     <sql id="searchDirectoryNodesConditions">
         <where>
-            and user_id = #{userId}
-            and deleted_at is null
+            and d.user_id = #{userId}
+            and d.deleted_at is null
 
             <if test="keyword != null and keyword != ''">
-                and label like concat('%', #{keyword}, '%')
+                and d.label like concat('%', #{keyword}, '%')
             </if>
 
             <if test="nodeType != null">
-                and node_type = #{nodeType}
+                and d.node_type = #{nodeType}
+            </if>
+
+            <if test="tagIds != null and tagIds.size != 0">
+                and exists(
+                    select 1
+                    from directory_node_tags dnt
+                    where dnt.directory_node_id = d.id
+                        and dnt.tag_id in
+                        <foreach collection="tagIds" item="tagId" separator="," open="(" close=")">
+                            #{tagId}
+                        </foreach>
+                )
             </if>
 
             <if test="startTime != null">
-                and created_at >= #{startTime}
+                and d.created_at >= #{startTime}
             </if>
 
             <if test="endTime != null">
-                and created_at &lt; #{endTime}
+                and d.created_at &lt; #{endTime}
             </if>
         </where>
     </sql>
 
-    <select id="searchDirectoryNodes" resultType="com.vikim.demo.note.DirectoryNodeRow">
-        select id, parent_id, label, x, y, node_type, created_at, updated_at
-        from directory_nodes
+    <select id="searchDirectoryNodes" resultType="java.lang.Long">
+        select d.id
+        from directory_nodes d
 
         <include refid="searchDirectoryNodesConditions"/>
 
-        order by created_at desc, id desc
+        order by d.created_at desc, d.id desc
 
         limit #{limit}
         offset #{offset}
@@ -110,9 +122,26 @@
 
     <select id="countDirectoryNodes" resultType="int">
         select count(*)
-        from directory_nodes
+        from directory_nodes d
 
         <include refid="searchDirectoryNodesConditions"/>
+    </select>
+
+    <select id="getDirectoryNodesByIds" resultType="com.vikim.demo.note.DirectoryNodeWithTagRow">
+        select d.id, d.parent_id, d.label, d.x, d.y, d.node_type, t.id as tagId, t.name as tagName, d.created_at, d.updated_at
+        from directory_nodes d
+        left join directory_node_tags dnt on d.id = dnt.directory_node_id
+            and d.node_type = 'DETAIL'
+        left join tags t on t.id = dnt.tag_id and t.user_id = d.user_id
+        where d.deleted_at is null and d.id in
+        <foreach
+                collection="ids"
+                item="id"
+                open="("
+                separator=","
+                close=")">
+            #{id}
+        </foreach>
     </select>
 
     <sql id="searchDirectoryNodesInTrashBinConditions">

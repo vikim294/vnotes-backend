@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public record BatchCreateDirectoryNodesDTO(
@@ -28,7 +29,9 @@ public record BatchCreateDirectoryNodesDTO(
         BigDecimal y,
 
         @NotNull(message = "nodeType 不能为空")
-        NodeType nodeType
+        NodeType nodeType,
+
+        List<Long> tagIds
 ) {
 
 }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.vikim.demo.tag.TagMapper">
+
+    <select id="checkUserHasTags" resultType="int">
+        select count(*)
+        from tags
+        where user_id = #{userId} and
+            id in
+            <foreach collection="tagIds"
+                     item="id"
+                     open="("
+                     separator=","
+                     close=")">
+                #{id}
+            </foreach>
+    </select>
+
+</mapper>

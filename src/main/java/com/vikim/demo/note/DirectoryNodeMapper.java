@@ -25,9 +25,11 @@ public interface DirectoryNodeMapper {
     """)
     List<DirectoryNodeRow> fetchAllDirectoryNodes(@Param("user_id") Long userId);
 
-    List<DirectoryNodeRow> searchDirectoryNodes(SearchDirectoryNodeMapperParam param);
+    List<Long> searchDirectoryNodes(SearchDirectoryNodeMapperParam param);
 
     int countDirectoryNodes(SearchDirectoryNodeMapperParam param);
+
+    List<DirectoryNodeWithTagRow> getDirectoryNodesByIds(@Param("ids") List<Long> ids);
 
     boolean hasDirectoryNode(@Param("userId") Long userId, @Param("id") Long id, @Param("nodeType") NodeType nodeType);
 
@@ -129,4 +131,12 @@ public interface DirectoryNodeMapper {
                     deleted_at < date_sub(now(), interval 30 day)
             """)
     List<FindAllUsersAndDeletedRootNotesVO> findAllUsersAndDeletedRootNotes();
+
+    @Select("""
+            select count(*)
+            from directory_nodes
+            where id = #{id} and
+                node_type = 'DETAIL'
+            """)
+    int isWithDetail(Long id);
 }

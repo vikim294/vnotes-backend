@@ -2,6 +2,10 @@ package com.vikim.demo.note;
 
 import com.vikim.demo.common.*;
 import com.vikim.demo.objectStorage.ObjectStorageService;
+import com.vikim.demo.tag.DirectoryNodeTagMapper;
+import com.vikim.demo.tag.SimpleTagResponse;
+import com.vikim.demo.tag.TagMapper;
+import com.vikim.demo.tag.TagResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +31,8 @@ public class NoteService {
     private final DetailNodeTransactionService detailNodeTransactionService;
     private final NoteTransactionService noteTransactionService;
     private final ObjectStorageService objectStorageService;
+    private final DirectoryNodeTagMapper directoryNodeTagMapper;
+    private final TagMapper tagMapper;
 
     public Long createDirectoryNode(Long userId, CreateDirectoryNodeRequest request) {
         if (request.parentId() != null && !directoryNodeMapper.hasDirectoryNode(userId, request.parentId(), NodeType.DIRECTORY)) {
@@ -46,14 +52,65 @@ public class NoteService {
                 .map(FetchDirectoryNodesResponse::from).toList();
     }
 
-    public PageResponse<FetchDirectoryNodesResponse> searchDirectoryNodes(Long userId, String keyword, int pageSize, int page, NodeType nodeType, LocalDateTime startTime, LocalDateTime endTime) {
-        SearchDirectoryNodeMapperParam param = new SearchDirectoryNodeMapperParam(userId, keyword, pageSize, (page - 1) * pageSize, nodeType, startTime, endTime);
+    public PageResponse<FetchDirectoryNodesWithTagsResponse> searchDirectoryNodes(Long userId, String keyword, int pageSize, int page, NodeType nodeType, Set<Long> tagIds, LocalDateTime startTime, LocalDateTime endTime) {
+        // 校验 tags 都是用户的
+        if(tagIds != null && !tagIds.isEmpty() && tagIds.size() != tagMapper.checkUserHasTags(userId, tagIds)) {
+          throw new BusinessException(ErrorCode.INVALID_TAGS);
+        }
 
-        List<FetchDirectoryNodesResponse> responses = directoryNodeMapper.searchDirectoryNodes(param).stream()
-                .map(FetchDirectoryNodesResponse::from).toList();
+        SearchDirectoryNodeMapperParam param = new SearchDirectoryNodeMapperParam(userId, keyword, pageSize, (page - 1) * pageSize, nodeType, tagIds, startTime, endTime);
+
+        // 先找符合条件的 一页目录节点 id
+        List<Long> ids = directoryNodeMapper.searchDirectoryNodes(param);
+
+        // 再根据 id 找数据
+        List<DirectoryNodeWithTagRow> rows = new ArrayList<>();
+
+        // ids 非空才找
+        if(!ids.isEmpty()) {
+            rows = directoryNodeMapper.getDirectoryNodesByIds(ids);
+        }
+
+        // 组装响应
+        Map<Long, FetchDirectoryNodesWithTagsResponse> responseMap = new HashMap<>();
+
+        for(DirectoryNodeWithTagRow row : rows){
+            FetchDirectoryNodesWithTagsResponse item = responseMap.get(row.id());
+
+            SimpleTagResponse simpleTagResponse = new SimpleTagResponse(
+                    row.tagId(),
+                    row.tagName()
+            );
+            if(item == null) {
+                // first one
+                Set<SimpleTagResponse> tags = new HashSet<>();
+                if(simpleTagResponse.id() != null) {
+                    tags.add(simpleTagResponse);
+                }
+
+                responseMap.put(row.id(), new FetchDirectoryNodesWithTagsResponse(
+                    row.id(),
+                    row.parentId(),
+                        row.label(),
+                        row.x(),
+                        row.y(),
+                        row.nodeType(),
+                        tags,
+                        row.createdAt().toInstant(ZoneOffset.UTC),
+                        row.updatedAt().toInstant(ZoneOffset.UTC)
+                ));
+            }
+            else {
+                if(simpleTagResponse.id() != null) {
+                    item.getTags().add(simpleTagResponse);
+                }
+            }
+        }
+
         int total = directoryNodeMapper.countDirectoryNodes(param);
 
-        return new PageResponse<>(responses, page, pageSize, total);
+        // 按分页查询结果 ids 的顺序返回响应
+        return new PageResponse<>(ids.stream().map(responseMap::get).toList(), page, pageSize, total);
     }
 
     public PageResponse<SearchDirectoryNodesInTrashBinResponse> searchDirectoryNodesInTrashBin(Long userId, String keyword, int pageSize, int page, NodeType nodeType, LocalDateTime startTime, LocalDateTime endTime) {
@@ -112,8 +169,24 @@ public class NoteService {
                 throw new BusinessException(ErrorCode.DIRECTORY_NODE_CREATED_FAILED);
             }
 
+            Long id = param.getId();
+
             // 保存 uuid -> id
-            uuidToId.put(addedNode.uuid(), param.getId());
+            uuidToId.put(addedNode.uuid(), id);
+
+            // 如果是带详情的目录节点 + 传了 tagIds
+            if(addedNode.nodeType() == NodeType.DETAIL && addedNode.tagIds() != null && !addedNode.tagIds().isEmpty()) {
+                // 去重
+                Set<Long> tagIds = new HashSet<>(addedNode.tagIds());
+
+                // 校验 tags 都是用户自己的
+                if(tagMapper.checkUserHasTags(userId, tagIds) != tagIds.size()) {
+                    throw new BusinessException(ErrorCode.INVALID_TAGS);
+                }
+
+                // 关联 目录节点 和 tags
+                directoryNodeTagMapper.batchCreateDirectoryNodeTags(id, tagIds);
+            }
         }
 
         // 更新 added 节点的 parentId
@@ -172,6 +245,28 @@ public class NoteService {
                 throw new BusinessException(
                         ErrorCode.DIRECTORY_NODE_NOT_FOUND
                 );
+            }
+
+            // 如果是带详情的目录节点
+            int count = directoryNodeMapper.isWithDetail(updatedNodes.getId());
+            // 传了 tagIds
+            if(count == 1 && updatedNodes.getTagIds() != null) {
+                // 去重
+                Set<Long> tagIds = new HashSet<>(updatedNodes.getTagIds());
+
+                // 校验 tags 都是用户自己的
+                if(!tagIds.isEmpty() && tagMapper.checkUserHasTags(userId, tagIds) != tagIds.size()) {
+                    throw new BusinessException(ErrorCode.INVALID_TAGS);
+                }
+
+                // 无论传入的 tagIds 是不是空数组，删除已有的关联记录
+                directoryNodeTagMapper.batchDeleteDirectoryNodeTags(updatedNodes.getId());
+
+                // tagIds 不是空数组
+                if(!tagIds.isEmpty()) {
+                    // 关联 目录节点 和 tags
+                    directoryNodeTagMapper.batchCreateDirectoryNodeTags(updatedNodes.getId(), tagIds);
+                }
             }
         }
 
@@ -576,5 +671,16 @@ public class NoteService {
         if(affectedRows < 1) {
             throw new BusinessException(ErrorCode.DETAIL_NODE_MOVE_FAILED);
         }
+    }
+
+    public List<TagResponse> getTagsByDirectoryNodeId(Long userId, Long directoryNodeId){
+        // 校验 用户有该节点
+        if(!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        return directoryNodeTagMapper.getTagsByDirectoryNodeId(directoryNodeId).stream()
+                .map(t -> new TagResponse(t.id(), t.name(), t.createdAt().toInstant(ZoneOffset.UTC)))
+                .toList();
     }
 }

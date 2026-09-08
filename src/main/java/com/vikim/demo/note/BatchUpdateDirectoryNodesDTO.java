@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -28,6 +29,8 @@ public class BatchUpdateDirectoryNodesDTO {
     @Digits(integer = 10, fraction = 2)
     @NotNull
     private BigDecimal y;
+
+    List<Long> tagIds;
 
     @JsonIgnore // 避免客户端直接传该字段
     private boolean parentIdPresent;

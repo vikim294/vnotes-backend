@@ -2,9 +2,9 @@ package com.vikim.demo.note;
 
 import com.vikim.demo.common.ApiResponse;
 import com.vikim.demo.common.PageResponse;
+import com.vikim.demo.tag.TagResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +18,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -58,7 +59,7 @@ public class NoteController {
     }
 
     @GetMapping("/directory/search")
-    public ApiResponse<PageResponse<FetchDirectoryNodesResponse>> searchDirectoryNodes(
+    public ApiResponse<PageResponse<FetchDirectoryNodesWithTagsResponse>> searchDirectoryNodes(
             Authentication authentication,
 
             @RequestParam(value = "keyword", required = false)
@@ -76,13 +77,17 @@ public class NoteController {
             @RequestParam(value = "nodeType", required = false)
             NodeType nodeType,
 
+            @RequestParam(value = "tagIds", required = false)
+            @Size(max = 100, message = "tagIds 不能多于 100")
+            Set<@NotNull Long> tagIds,
+
             @RequestParam(value = "startTime", required = false)
             LocalDateTime startTime,
 
             @RequestParam(value = "endTime", required = false)
             LocalDateTime endTime
     ) {
-        return ApiResponse.success(noteService.searchDirectoryNodes(getIdFromAuthentication(authentication), keyword, pageSize, page, nodeType, startTime, endTime), "搜索笔记目录成功");
+        return ApiResponse.success(noteService.searchDirectoryNodes(getIdFromAuthentication(authentication), keyword, pageSize, page, nodeType, tagIds, startTime, endTime), "搜索笔记目录成功");
     }
 
     @GetMapping("/directory/trash-bin/search")
@@ -213,5 +218,13 @@ public class NoteController {
     ) {
         noteService.moveDetailNode(getIdFromAuthentication(authentication), request.detailNodeId(), oldDirectoryNodeId, request.destDirectoryNodeId());
         return ApiResponse.success("移动详情节点成功");
+    }
+
+    @GetMapping("/directory/{id}/tag")
+    public ApiResponse<List<TagResponse>> getTagsByDirectoryNodeId(
+            Authentication authentication,
+            @PathVariable("id") Long directoryNodeId
+    ){
+        return ApiResponse.success(noteService.getTagsByDirectoryNodeId(getIdFromAuthentication(authentication), directoryNodeId),"获取笔记标签成功");
     }
 }
