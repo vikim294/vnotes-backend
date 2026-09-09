@@ -11,6 +11,7 @@ public record FetchDirectoryNodesResponse(
         BigDecimal x,
         BigDecimal y,
         NodeType nodeType,
+        boolean shared,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -22,6 +23,7 @@ public record FetchDirectoryNodesResponse(
                 row.x(),
                 row.y(),
                 row.nodeType(),
+                row.shared(),
                 row.createdAt().toInstant(ZoneOffset.UTC),
                 row.updatedAt().toInstant(ZoneOffset.UTC)
         );

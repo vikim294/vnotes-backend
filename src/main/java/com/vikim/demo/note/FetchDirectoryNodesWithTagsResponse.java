@@ -19,6 +19,7 @@ public class FetchDirectoryNodesWithTagsResponse {
     private BigDecimal x;
     private BigDecimal y;
     private NodeType nodeType;
+    private boolean shared;
     private Set<SimpleTagResponse> tags;
     private Instant createdAt;
     private Instant updatedAt;

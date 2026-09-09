@@ -10,6 +10,7 @@ public record DirectoryNodeRow(
         BigDecimal x,
         BigDecimal y,
         NodeType nodeType,
+        boolean shared,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

@@ -3,6 +3,7 @@ package com.vikim.demo.note;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Mapper
@@ -19,8 +20,10 @@ public interface DirectoryNodeMapper {
     int createDirectoryNode(CreateDirectoryNodeMapperParam param);
 
     @Select("""
-            select id, parent_id, label, x, y, node_type, created_at, updated_at
+            select dn.id, dn.parent_id, dn.label, dn.x, dn.y, dn.node_type, coalesce(ns.status = 'ACTIVE', false) as shared, dn.created_at, dn.updated_at
             from directory_nodes dn
+            left join note_shares ns
+                on dn.id = ns.directory_node_id
             where dn.user_id = #{user_id} and dn.deleted_at is null
     """)
     List<DirectoryNodeRow> fetchAllDirectoryNodes(@Param("user_id") Long userId);
@@ -139,4 +142,55 @@ public interface DirectoryNodeMapper {
                 node_type = 'DETAIL'
             """)
     int isWithDetail(Long id);
+
+    // 分享（纯新增）
+    @Insert("""
+            insert into note_shares(directory_node_id, share_token, status)
+            values(#{directoryNodeId}, #{shareToken}, 'ACTIVE')
+            """)
+    int createNoteShare(@Param("directoryNodeId") Long directoryNodeId, @Param("shareToken") String shareToken);
+
+    // 分享（更新）
+    @Update("""
+            update note_shares
+            set status = 'ACTIVE',
+                share_token = #{shareToken}
+            where status = 'REVOKED'
+                and directory_node_id = #{directoryNodeId}
+            """)
+    int activateNoteShare(@Param("directoryNodeId") Long directoryNodeId, @Param("shareToken") String shareToken);
+
+    // 取消分享
+    @Update("""
+            update note_shares
+            set status = 'REVOKED'
+            where status = 'ACTIVE'
+                and directory_node_id = #{directoryNodeId}
+            """)
+    int cancelNoteShare(@Param("directoryNodeId") Long directoryNodeId);
+
+    int batchCancelNoteShare(@Param("directoryNodeIds") Set<Long> directoryNodeIds);
+
+    @Select("""
+            select id, directory_node_id, share_token, status, created_at, updated_at
+            from note_shares
+            where directory_node_id = #{directoryNodeId}
+            """)
+    Optional<NoteShareRow> findNoteShareByDirectoryNodeId(@Param("directoryNodeId") Long directoryNodeId);
+
+    @Select("""
+            select id, directory_node_id, share_token, status, created_at, updated_at
+            from note_shares
+            where share_token = #{shareToken}
+                and status = 'ACTIVE'
+            """)
+    Optional<NoteShareRow> findNoteShareByShareToken(@Param("shareToken") String shareToken);
+
+    // 新增访问记录
+    @Insert("""
+             insert into note_share_access_logs(note_share_id)
+            values(#{noteShareId})
+            """)
+    int createNoteShareAccessLog(@Param("noteShareId") Long noteShareId);
+
 }

@@ -162,6 +162,18 @@ public enum ErrorCode {
             "无效的 tags"
     ),
 
+    NOTE_SHARE_NOT_FOUND(
+            40022,
+            HttpStatus.NOT_FOUND,
+            "分享未找到"
+    ),
+
+    NOTE_HAS_ALREADY_REVOKED(
+            40023,
+            HttpStatus.BAD_REQUEST,
+            "无法取消分享未被分享的笔记"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -314,6 +326,18 @@ public enum ErrorCode {
             50026,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "删除标签失败"
+    ),
+
+    UPDATE_NOTE_SHARE_FAILED(
+            50027,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "更新笔记分享失败"
+    ),
+
+    CREATE_NOTE_SHARE_FAILED(
+            50028,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "新增笔记分享失败"
     ),
 
     ;

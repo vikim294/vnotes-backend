@@ -10,6 +10,7 @@ public record DirectoryNodeWithTagRow(
         BigDecimal x,
         BigDecimal y,
         NodeType nodeType,
+        boolean shared,
         Long tagId,
         String tagName,
         LocalDateTime createdAt,

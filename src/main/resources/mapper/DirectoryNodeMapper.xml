@@ -128,8 +128,10 @@
     </select>
 
     <select id="getDirectoryNodesByIds" resultType="com.vikim.demo.note.DirectoryNodeWithTagRow">
-        select d.id, d.parent_id, d.label, d.x, d.y, d.node_type, t.id as tagId, t.name as tagName, d.created_at, d.updated_at
+        select d.id, d.parent_id, d.label, d.x, d.y, d.node_type, coalesce(ns.status = 'ACTIVE', false) as shared, t.id as tagId, t.name as tagName, d.created_at, d.updated_at
         from directory_nodes d
+        left join note_shares ns
+            on d.id = ns.directory_node_id
         left join directory_node_tags dnt on d.id = dnt.directory_node_id
             and d.node_type = 'DETAIL'
         left join tags t on t.id = dnt.tag_id and t.user_id = d.user_id
@@ -214,4 +216,19 @@
                 node_type = #{nodeType}
         )
     </select>
+
+    <update id="batchCancelNoteShare">
+        update note_shares
+        set status = 'REVOKED'
+        where status = 'ACTIVE'
+            and directory_node_id in
+            <foreach
+                    collection="directoryNodeIds"
+                    item="id"
+                    open="("
+                    separator=","
+                    close=")">
+                #{id}
+            </foreach>
+    </update>
 </mapper>

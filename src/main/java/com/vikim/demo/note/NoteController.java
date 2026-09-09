@@ -227,4 +227,37 @@ public class NoteController {
     ){
         return ApiResponse.success(noteService.getTagsByDirectoryNodeId(getIdFromAuthentication(authentication), directoryNodeId),"获取笔记标签成功");
     }
+
+    @PostMapping("/share")
+    public ApiResponse<String> shareNote(
+            Authentication authentication,
+            @RequestParam("directoryNodeId")
+            Long directoryNodeId
+    ){
+        return ApiResponse.success(noteService.shareNote(getIdFromAuthentication(authentication), directoryNodeId), "分享笔记成功");
+    }
+
+    @PatchMapping("/share")
+    public ApiResponse<Void> unshareNote(
+            Authentication authentication,
+            @RequestParam("directoryNodeId") Long directoryNodeId
+    ){
+        noteService.unshareNote(getIdFromAuthentication(authentication), directoryNodeId);
+        return ApiResponse.success("取消分享成功");
+    }
+
+    @GetMapping("/share/{shareToken}")
+    public ApiResponse<GetDetailNodesByShareTokenResponse> getDetailNodesByShareToken(
+            Authentication authentication,
+            @PathVariable("shareToken") String shareToken
+    ){
+        // 处理匿名用户访问接口
+        Long userId = null;
+
+        if(authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            userId = getIdFromAuthentication(authentication);
+        }
+
+        return ApiResponse.success(noteService.getDetailNodesByShareToken(userId, shareToken),"获取笔记成功");
+    }
 }

@@ -54,8 +54,8 @@ public class NoteService {
 
     public PageResponse<FetchDirectoryNodesWithTagsResponse> searchDirectoryNodes(Long userId, String keyword, int pageSize, int page, NodeType nodeType, Set<Long> tagIds, LocalDateTime startTime, LocalDateTime endTime) {
         // 校验 tags 都是用户的
-        if(tagIds != null && !tagIds.isEmpty() && tagIds.size() != tagMapper.checkUserHasTags(userId, tagIds)) {
-          throw new BusinessException(ErrorCode.INVALID_TAGS);
+        if (tagIds != null && !tagIds.isEmpty() && tagIds.size() != tagMapper.checkUserHasTags(userId, tagIds)) {
+            throw new BusinessException(ErrorCode.INVALID_TAGS);
         }
 
         SearchDirectoryNodeMapperParam param = new SearchDirectoryNodeMapperParam(userId, keyword, pageSize, (page - 1) * pageSize, nodeType, tagIds, startTime, endTime);
@@ -67,41 +67,41 @@ public class NoteService {
         List<DirectoryNodeWithTagRow> rows = new ArrayList<>();
 
         // ids 非空才找
-        if(!ids.isEmpty()) {
+        if (!ids.isEmpty()) {
             rows = directoryNodeMapper.getDirectoryNodesByIds(ids);
         }
 
         // 组装响应
         Map<Long, FetchDirectoryNodesWithTagsResponse> responseMap = new HashMap<>();
 
-        for(DirectoryNodeWithTagRow row : rows){
+        for (DirectoryNodeWithTagRow row : rows) {
             FetchDirectoryNodesWithTagsResponse item = responseMap.get(row.id());
 
             SimpleTagResponse simpleTagResponse = new SimpleTagResponse(
                     row.tagId(),
                     row.tagName()
             );
-            if(item == null) {
+            if (item == null) {
                 // first one
                 Set<SimpleTagResponse> tags = new HashSet<>();
-                if(simpleTagResponse.id() != null) {
+                if (simpleTagResponse.id() != null) {
                     tags.add(simpleTagResponse);
                 }
 
                 responseMap.put(row.id(), new FetchDirectoryNodesWithTagsResponse(
-                    row.id(),
-                    row.parentId(),
+                        row.id(),
+                        row.parentId(),
                         row.label(),
                         row.x(),
                         row.y(),
                         row.nodeType(),
+                        row.shared(),
                         tags,
                         row.createdAt().toInstant(ZoneOffset.UTC),
                         row.updatedAt().toInstant(ZoneOffset.UTC)
                 ));
-            }
-            else {
-                if(simpleTagResponse.id() != null) {
+            } else {
+                if (simpleTagResponse.id() != null) {
                     item.getTags().add(simpleTagResponse);
                 }
             }
@@ -175,12 +175,12 @@ public class NoteService {
             uuidToId.put(addedNode.uuid(), id);
 
             // 如果是带详情的目录节点 + 传了 tagIds
-            if(addedNode.nodeType() == NodeType.DETAIL && addedNode.tagIds() != null && !addedNode.tagIds().isEmpty()) {
+            if (addedNode.nodeType() == NodeType.DETAIL && addedNode.tagIds() != null && !addedNode.tagIds().isEmpty()) {
                 // 去重
                 Set<Long> tagIds = new HashSet<>(addedNode.tagIds());
 
                 // 校验 tags 都是用户自己的
-                if(tagMapper.checkUserHasTags(userId, tagIds) != tagIds.size()) {
+                if (tagMapper.checkUserHasTags(userId, tagIds) != tagIds.size()) {
                     throw new BusinessException(ErrorCode.INVALID_TAGS);
                 }
 
@@ -250,12 +250,12 @@ public class NoteService {
             // 如果是带详情的目录节点
             int count = directoryNodeMapper.isWithDetail(updatedNodes.getId());
             // 传了 tagIds
-            if(count == 1 && updatedNodes.getTagIds() != null) {
+            if (count == 1 && updatedNodes.getTagIds() != null) {
                 // 去重
                 Set<Long> tagIds = new HashSet<>(updatedNodes.getTagIds());
 
                 // 校验 tags 都是用户自己的
-                if(!tagIds.isEmpty() && tagMapper.checkUserHasTags(userId, tagIds) != tagIds.size()) {
+                if (!tagIds.isEmpty() && tagMapper.checkUserHasTags(userId, tagIds) != tagIds.size()) {
                     throw new BusinessException(ErrorCode.INVALID_TAGS);
                 }
 
@@ -263,7 +263,7 @@ public class NoteService {
                 directoryNodeTagMapper.batchDeleteDirectoryNodeTags(updatedNodes.getId());
 
                 // tagIds 不是空数组
-                if(!tagIds.isEmpty()) {
+                if (!tagIds.isEmpty()) {
                     // 关联 目录节点 和 tags
                     directoryNodeTagMapper.batchCreateDirectoryNodeTags(updatedNodes.getId(), tagIds);
                 }
@@ -489,8 +489,8 @@ public class NoteService {
 
         // 校验：added 的节点的 UUID 是否唯一
         Set<UUID> addedUuids = new HashSet<>();
-        for(BatchCreateDetailNodesDTO addedNodes: request.added()) {
-            if(!addedUuids.add(addedNodes.getUuid())) {
+        for (BatchCreateDetailNodesDTO addedNodes : request.added()) {
+            if (!addedUuids.add(addedNodes.getUuid())) {
                 throw new BusinessException(ErrorCode.INVALID_DETAIL_NODE_RELATION);
             }
         }
@@ -612,7 +612,7 @@ public class NoteService {
         }
     }
 
-    public void hardDeleteFromTrashBin(Long userId, IdsRequest request){
+    public void hardDeleteFromTrashBin(Long userId, IdsRequest request) {
         List<FindImageNodesByDirectoryNodesWithDetailResponse> imageNodesInvolved = noteTransactionService.hardDeleteRootNodesFromTrashBin(userId, request.ids());
 
         deleteFilesOfImageNodes(imageNodesInvolved.stream().map(FindImageNodesByDirectoryNodesWithDetailResponse::imageUrl).toList());
@@ -630,10 +630,10 @@ public class NoteService {
 
     // 删除图片节点对应的文件（对象存储）
     private void deleteFilesOfImageNodes(List<String> imageUrls) {
-       objectStorageService.deleteQuietly(imageUrls);
+        objectStorageService.deleteQuietly(imageUrls);
     }
 
-    public CleanUpDeletedRootNodesResponse cleanUpDeletedRootNodes(){
+    public CleanUpDeletedRootNodesResponse cleanUpDeletedRootNodes() {
         CleanUpDeletedRootNodesResponse response = noteTransactionService.cleanUpDeletedRootNodes();
 
         deleteFilesOfImageNodes(response.imageNodes().stream().map(FindImageNodesByDirectoryNodesWithDetailResponse::imageUrl).toList());
@@ -644,22 +644,22 @@ public class NoteService {
     // 移动 DETAIL 目录节点 A 下的详情节点 X（包括后代节点）
     // 到 DETAIL 目录节点 B 下，作为一个独立节点/树
     @Transactional
-    public void moveDetailNode(Long userId, Long detailNodeId, Long oldDirectoryNodeId, Long destDirectoryNodeId){
-        if(Objects.equals(oldDirectoryNodeId, destDirectoryNodeId)) {
+    public void moveDetailNode(Long userId, Long detailNodeId, Long oldDirectoryNodeId, Long destDirectoryNodeId) {
+        if (Objects.equals(oldDirectoryNodeId, destDirectoryNodeId)) {
             throw new BusinessException(ErrorCode.OLD_AND_DEST_DIRECTORY_NODES_ARE_SAME_CODE);
         }
 
         // 校验用户有该 oldDirectoryNode
-        if(!directoryNodeMapper.hasDirectoryNode(userId, oldDirectoryNodeId, NodeType.DETAIL)) {
+        if (!directoryNodeMapper.hasDirectoryNode(userId, oldDirectoryNodeId, NodeType.DETAIL)) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
 
         // 校验用户有该详情节点
         FetchDetailNodesRow detailNodesRow = detailNodeMapper.getDetailNodeById(detailNodeId, oldDirectoryNodeId)
-                .orElseThrow(()->new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND));
 
         // 校验用户有该 destDirectoryNode
-        if(!directoryNodeMapper.hasDirectoryNode(userId, destDirectoryNodeId, NodeType.DETAIL)) {
+        if (!directoryNodeMapper.hasDirectoryNode(userId, destDirectoryNodeId, NodeType.DETAIL)) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
 
@@ -668,19 +668,129 @@ public class NoteService {
         BigDecimal offsetY = detailNodesRow.y();
 
         int affectedRows = detailNodeMapper.moveDetailNode(detailNodeId, oldDirectoryNodeId, destDirectoryNodeId, offsetX, offsetY);
-        if(affectedRows < 1) {
+        if (affectedRows < 1) {
             throw new BusinessException(ErrorCode.DETAIL_NODE_MOVE_FAILED);
         }
     }
 
-    public List<TagResponse> getTagsByDirectoryNodeId(Long userId, Long directoryNodeId){
+    public List<TagResponse> getTagsByDirectoryNodeId(Long userId, Long directoryNodeId) {
         // 校验 用户有该节点
-        if(!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+        if (!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
 
         return directoryNodeTagMapper.getTagsByDirectoryNodeId(directoryNodeId).stream()
                 .map(t -> new TagResponse(t.id(), t.name(), t.createdAt().toInstant(ZoneOffset.UTC)))
                 .toList();
+    }
+
+    public String shareNote(Long userId, Long directoryNodeId) {
+        // --- 校验
+        // 用户有该节点
+        if (!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 生成 token
+        String shareToken = UUID.randomUUID().toString();
+
+        // 尝试找分享记录
+        Optional<NoteShareRow> optionalNoteShare = directoryNodeMapper.findNoteShareByDirectoryNodeId(directoryNodeId);
+        if(optionalNoteShare.isPresent()){
+            // 已存在分享记录
+
+            // 如果 status 为 active 则返回已有 token
+            if (optionalNoteShare.get().status() == NoteShareStatus.ACTIVE) {
+                return optionalNoteShare.get().shareToken();
+            }
+
+            // 更新状态
+            if(directoryNodeMapper.activateNoteShare(directoryNodeId, shareToken) != 1) {
+                throw new BusinessException(ErrorCode.UPDATE_NOTE_SHARE_FAILED);
+            }
+        }
+        else {
+            // 新增分享记录
+            if(directoryNodeMapper.createNoteShare(directoryNodeId, shareToken) != 1) {
+                throw new BusinessException(ErrorCode.CREATE_NOTE_SHARE_FAILED);
+            }
+        }
+
+        return shareToken;
+    }
+
+    public void unshareNote(Long userId, Long directoryNodeId) {
+        // 校验 用户有该节点
+        if (!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 尝试找分享记录
+        NoteShareRow noteShareRow = directoryNodeMapper.findNoteShareByDirectoryNodeId(directoryNodeId)
+                .orElseThrow(()->new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
+
+        // 如果 status 为 active 则返回
+        if (noteShareRow.status() == NoteShareStatus.REVOKED) {
+            throw new BusinessException(ErrorCode.NOTE_HAS_ALREADY_REVOKED);
+        }
+
+        if(directoryNodeMapper.cancelNoteShare(directoryNodeId) != 1) {
+            throw new BusinessException(ErrorCode.UPDATE_NOTE_SHARE_FAILED);
+        }
+    }
+
+    public GetDetailNodesByShareTokenResponse getDetailNodesByShareToken(Long userId, String shareToken){
+        // 校验 shareToken、status
+        NoteShareRow noteShareRow = directoryNodeMapper.findNoteShareByShareToken(shareToken)
+                .orElseThrow(()->new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
+
+        // 查 directory node
+        List<DirectoryNodeWithTagRow> rows = directoryNodeMapper.getDirectoryNodesByIds(List.of(noteShareRow.directoryNodeId()));
+        if(rows.isEmpty()) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 组装 title 和 tags 响应字段
+        String title = rows.getFirst().label();
+        Set<SimpleTagResponse> tags = rows.stream()
+                .filter(row -> row.tagId() != null)
+                .map(row -> new SimpleTagResponse(
+                        row.tagId(),
+                        row.tagName()
+                ))
+                .collect(Collectors.toSet());
+
+        // 查 detail nodes
+        List<FetchDetailNodesResponse> detailNodes = detailNodeMapper.fetchDetailNodesByDirectoryNodeId(noteShareRow.directoryNodeId()).stream()
+                .map(row -> {
+                    return new FetchDetailNodesResponse(
+                            row.id(),
+                            row.parentId(),
+                            row.directoryNodeId(),
+                            row.label(),
+                            objectStorageService.generatePresignedUrl(row.imageUrl()),
+                            row.x(),
+                            row.y(),
+                            row.imageWidth(),
+                            row.imageHeight(),
+                            row.contentType(),
+                            row.markType(),
+                            row.createdAt().toInstant(ZoneOffset.UTC),
+                            row.updatedAt().toInstant(ZoneOffset.UTC)
+                    );
+                }).toList();
+
+        // owner 不产生访问记录
+        if(userId == null || !directoryNodeMapper.hasDirectoryNode(userId, noteShareRow.directoryNodeId(), NodeType.DETAIL)){
+            // 记录访问
+            // todo 改成异步
+            directoryNodeMapper.createNoteShareAccessLog(noteShareRow.id());
+        }
+
+        return new GetDetailNodesByShareTokenResponse(
+                title,
+                tags,
+                detailNodes
+        );
     }
 }

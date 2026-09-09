@@ -41,6 +41,9 @@ public class NoteTransactionService {
             }
         }
 
+        // 为了后面取消分享 已分享的笔记
+        Set<Long> directoryNodesWithDetail = new HashSet<>();
+
         // --- 对 deletedRootNodeIds 中的每一个根节点
         for (Long id : deletedRootNodeIds) {
             Long originalParentId = idToParentId.get(id);
@@ -60,6 +63,14 @@ public class NoteTransactionService {
             if (directoryNodeMapper.batchDeleteDirectoryNodeSubTree(userId, id) < 1) {
                 throw new BusinessException(ErrorCode.DIRECTORY_NODE_UPDATED_DELETED_AT_AND_DELETED_ROOT_ID_FAILED);
             }
+
+            // 找出所有带详情的目录节点
+            directoryNodesWithDetail.addAll(directoryNodeMapper.findDirectoryNodesWithDetailByRootId(userId, id));
+        }
+
+        // 取消分享已分享的笔记
+        if(!directoryNodesWithDetail.isEmpty()) {
+            directoryNodeMapper.batchCancelNoteShare(directoryNodesWithDetail);
         }
     }
 
