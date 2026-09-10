@@ -18,26 +18,23 @@ public class LoginCodeService {
         return "oauth:login:code:" + loginCode;
     }
 
-    public void cache(String token, String loginCode) {
+    // 缓存用户的 loginCode
+    public void cache(Long userId, String loginCode) {
         String key = getKey(loginCode);
 
         stringRedisTemplate.opsForValue()
-                .set(key, token, Duration.ofSeconds(30));
+                .set(key, userId.toString(), Duration.ofSeconds(30));
     }
 
-    public String getTokenByLoginCode(String loginCode) {
+    public Long getUserIdByLoginCode(String loginCode) {
         String key = getKey(loginCode);
 
-        // 原子操作 get and delete
-        String token = stringRedisTemplate.opsForValue()
-                .getAndDelete(key);
+        String userId = stringRedisTemplate.opsForValue().getAndDelete(key);
 
-        if (token == null) {
-            throw new BusinessException(
-                    ErrorCode.OAUTH_LOGIN_CODE_INVALID_OR_EXPIRED
-            );
+        if(userId == null) {
+            throw new BusinessException(ErrorCode.OAUTH_LOGIN_CODE_INVALID_OR_EXPIRED);
         }
 
-        return token;
+        return Long.valueOf(userId);
     }
 }

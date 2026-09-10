@@ -21,6 +21,7 @@ public class OAuthController {
     private final OAuthProperties oAuthProperties;
     private final OAuthTransactionService oAuthTransactionService;
     private final LoginCodeService loginCodeService;
+    private final JwtService jwtService;
 
     private String encodeUri(String uri) {
         return URLEncoder.encode(uri, StandardCharsets.UTF_8);
@@ -50,14 +51,14 @@ public class OAuthController {
         GetGoogleTokenResponse res = oAuthGoogleService.getGoogleTokenByCode(code);
         // 验证 + 解析 idToken
         GoogleUserInfo userInfo = oAuthGoogleService.verifyAndParseIdToken(res.getId_token());
+        // 得到 userId
+        Long userId = oAuthTransactionService.googleCallback(userInfo);
 
         // 生成临时 loginCode
         String loginCode = UUID.randomUUID().toString();
 
-        Long userId = oAuthTransactionService.googleCallback(userInfo);
-
-        // 生成 jwt 和暂存 redis 操作放到事务返回后
-        oAuthTransactionService.generateTokenByUserIdAndCacheWithLoginCode(userId, loginCode);
+        // 暂存 redis 操作放到事务返回后
+        loginCodeService.cache(userId, loginCode);
 
         // 带上 login code 重定向到登录页
         // 本地测试 http://localhost:5173/login?loginCode=
@@ -68,9 +69,11 @@ public class OAuthController {
     }
 
     @PostMapping("/token")
-    public ApiResponse<GetTokenByLoginCodeResponse> getTokenByLoginCode(
+    public ApiResponse<LoginResponse> getTokenByLoginCode(
             @Valid @RequestBody GetTokenByLoginCodeRequest request
     ) {
-        return ApiResponse.success(new GetTokenByLoginCodeResponse(loginCodeService.getTokenByLoginCode(request.code())), "获取 token 成功");
+        Long userId = loginCodeService.getUserIdByLoginCode(request.code());
+
+        return ApiResponse.success(jwtService.generateAccessToken(userId), "获取 token 成功");
     }
 }

@@ -17,16 +17,14 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class OAuthTransactionService {
     private final OauthAccountMapper oauthAccountMapper;
-    private final JwtService jwtService;
     private final UserMapper userMapper;
-    private final LoginCodeService loginCodeService;
 
     @Transactional
     public Long googleCallback(GoogleUserInfo userInfo){
         // 判断 oauth_accounts 中是否已有该用户
         Optional<OauthAccount> optionalOauthAccount = oauthAccountMapper.findByGoogleSub(userInfo.sub());
         if(optionalOauthAccount.isPresent()) {
-            // 已有该用户 -> 生成 jwt
+            // 已有该用户 -> 直接返回 userId
             return optionalOauthAccount.get().getUserId();
         }
         else {
@@ -40,14 +38,8 @@ public class OAuthTransactionService {
                 throw new BusinessException(ErrorCode.OAUTH_ACCOUNT_CREATED_FAILED);
             }
 
+            // 返回 userId
             return param.getId();
         }
-    }
-
-    public void generateTokenByUserIdAndCacheWithLoginCode(Long userId, String loginCode) {
-        // 生成 jwt
-        LoginResponse loginResponse = jwtService.generateAccessToken(userId);
-        // 暂存 redis
-        loginCodeService.cache(loginResponse.accessToken(), loginCode);
     }
 }
