@@ -793,4 +793,31 @@ public class NoteService {
                 detailNodes
         );
     }
+
+    public NoteShareResponse getNoteShareByDirectoryNodeId(Long userId, Long directoryNodeId) {
+        // 校验 用户有该节点
+        if (!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 尝试找分享记录
+        NoteShareRow noteShareRow = directoryNodeMapper.findNoteShareByDirectoryNodeId(directoryNodeId)
+                .orElseThrow(()->new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
+
+        return NoteShareResponse.from(noteShareRow);
+    }
+
+    public List<NoteShareAccessLogResponse> fetchNoteShareAccessLogsByNoteShareId(Long userId, Long noteShareId) {
+        // 校验
+        if (!directoryNodeMapper.hasUserSharedNote(userId, noteShareId)) {
+            throw new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND);
+        }
+
+        // 尝试找分享记录
+        List<NoteShareAccessLogRow> rows = directoryNodeMapper.fetchNoteShareAccessLogsByNoteShareId(noteShareId);
+
+        return rows.stream()
+                .map(NoteShareAccessLogResponse::from)
+                .toList();
+    }
 }

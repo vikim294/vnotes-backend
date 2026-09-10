@@ -246,7 +246,7 @@ public class NoteController {
         return ApiResponse.success("取消分享成功");
     }
 
-    @GetMapping("/share/{shareToken}")
+    @GetMapping("/shared/{shareToken}")
     public ApiResponse<GetDetailNodesByShareTokenResponse> getDetailNodesByShareToken(
             Authentication authentication,
             @PathVariable("shareToken") String shareToken
@@ -259,5 +259,21 @@ public class NoteController {
         }
 
         return ApiResponse.success(noteService.getDetailNodesByShareToken(userId, shareToken),"获取笔记成功");
+    }
+
+    @GetMapping("/share")
+    public ApiResponse<NoteShareResponse> getNoteShareByDirectoryNodeId(
+            Authentication authentication,
+            @RequestParam("directoryNodeId") Long directoryNodeId
+    ){
+        return ApiResponse.success(noteService.getNoteShareByDirectoryNodeId(getIdFromAuthentication(authentication), directoryNodeId), "获取分享详情成功");
+    }
+
+    @GetMapping("/share/access-logs/{id}")
+    public ApiResponse<List<NoteShareAccessLogResponse>> fetchNoteShareAccessLogsByNoteShareId(
+            Authentication authentication,
+            @PathVariable("id") Long noteShareId
+    ){
+        return ApiResponse.success(noteService.fetchNoteShareAccessLogsByNoteShareId(getIdFromAuthentication(authentication), noteShareId), "获取分享访问记录成功");
     }
 }

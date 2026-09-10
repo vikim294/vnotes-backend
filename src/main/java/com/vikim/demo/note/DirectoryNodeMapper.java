@@ -193,4 +193,25 @@ public interface DirectoryNodeMapper {
             """)
     int createNoteShareAccessLog(@Param("noteShareId") Long noteShareId);
 
+    // 获取访问记录
+    @Select("""
+            select id, created_at
+            from note_share_access_logs
+            where note_share_id = #{noteShareId}
+            order by created_at desc, id desc
+            """)
+    List<NoteShareAccessLogRow> fetchNoteShareAccessLogsByNoteShareId(@Param("noteShareId") Long noteShareId);
+
+    // 校验用户有该 note share 记录
+    @Select("""
+            select exists(
+                select 1
+                from directory_nodes dn
+                join note_shares ns
+                    on dn.id = ns.directory_node_id
+                where dn.user_id = #{userId}
+                    and ns.id = #{noteShareId}
+            )
+            """)
+    boolean hasUserSharedNote(@Param("userId") Long userId, @Param("noteShareId") Long noteShareId);
 }
