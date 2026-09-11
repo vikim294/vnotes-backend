@@ -33,6 +33,7 @@ public class NoteService {
     private final ObjectStorageService objectStorageService;
     private final DirectoryNodeTagMapper directoryNodeTagMapper;
     private final TagMapper tagMapper;
+    private final NoteShareAccessLogAsyncService noteShareAccessLogAsyncService;
 
     public Long createDirectoryNode(Long userId, CreateDirectoryNodeRequest request) {
         if (request.parentId() != null && !directoryNodeMapper.hasDirectoryNode(userId, request.parentId(), NodeType.DIRECTORY)) {
@@ -783,8 +784,7 @@ public class NoteService {
         // owner 不产生访问记录
         if(userId == null || !directoryNodeMapper.hasDirectoryNode(userId, noteShareRow.directoryNodeId(), NodeType.DETAIL)){
             // 记录访问
-            // todo 改成异步
-            directoryNodeMapper.createNoteShareAccessLog(noteShareRow.id());
+            noteShareAccessLogAsyncService.createNoteShareAccessLog(noteShareRow.id());
         }
 
         return new GetDetailNodesByShareTokenResponse(
