@@ -42,9 +42,10 @@ public interface DetailNodeMapper {
     );
 
     @Select("""
-            select id, parent_id, directory_node_id, label, image_url, x, y, image_width, image_height, content_type, mark_type, created_at, updated_at
-            from detail_nodes
-            where id = #{id} and directory_node_id = #{directoryNodeId}
+            select dn.id, dn.parent_id, dn.directory_node_id, dn.label, dn.image_url, dn.x, dn.y, dn.image_width, dn.image_height, dn.content_type, ar.id is not null as article, dn.mark_type, dn.created_at, dn.updated_at
+            from detail_nodes dn
+            left join articles ar on ar.detail_node_id = dn.id
+            where dn.id = #{id} and dn.directory_node_id = #{directoryNodeId}
     """)
     Optional<FetchDetailNodesRow> getDetailNodeById(@Param("id") Long id, @Param("directoryNodeId") Long directoryNodeId);
 

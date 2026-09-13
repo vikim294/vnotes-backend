@@ -33,12 +33,15 @@ public class GlobalExceptionHandler {
 
 
     // 并发下，如果数据库侧有问题，会在这里处理
+    // 比如字符串转 boolean -> SQL 数据转换异常
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
             DataIntegrityViolationException exception,
             HttpServletRequest request
     ) {
         ErrorCode errorCode = ErrorCode.DATA_CONFLICT;
+
+        log.error("DataIntegrityViolationException", exception);
 
         return ResponseEntity.status(errorCode.getHttpStatus())
                 .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage()));
