@@ -6,6 +6,7 @@ public record NoteShareAccessLogRow(
         Long id,
         NoteShareTarget target,
         String targetLabel,
+        String visitorId,
         LocalDateTime createdAt
 ) {
 }

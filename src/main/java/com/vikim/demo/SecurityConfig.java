@@ -90,7 +90,8 @@ public class SecurityConfig {
                 )
         );
 
-        configuration.setAllowCredentials(false);
+        // 允许跨域请求携带 cookie
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();

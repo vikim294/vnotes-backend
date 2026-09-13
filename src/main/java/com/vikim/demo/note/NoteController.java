@@ -5,20 +5,20 @@ import com.vikim.demo.common.PageResponse;
 import com.vikim.demo.tag.TagResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -28,6 +28,7 @@ public class NoteController {
     private final ExportService exportService;
     private final ImportService importService;
     private final ObjectMapper objectMapper;
+    @Value("${app.cookie.secure:false}") boolean cookieSecure;
 
     public NoteController(NoteService noteService, ExportService exportService, ImportService importService, ObjectMapper objectMapper) {
         this.noteService = noteService;
@@ -247,9 +248,11 @@ public class NoteController {
     }
 
     @GetMapping("/shared/note/{shareToken}")
-    public ApiResponse<GetDetailNodesByShareTokenResponse> getDetailNodesByShareToken(
+    public ResponseEntity<ApiResponse<GetDetailNodesByShareTokenResponse>> getDetailNodesByShareToken(
             Authentication authentication,
-            @PathVariable("shareToken") String shareToken
+            @PathVariable("shareToken") String shareToken,
+            @CookieValue(value = "visitorId", required = false)
+            String visitorId
     ) {
         // 处理匿名用户访问接口
         Long userId = null;
@@ -258,7 +261,32 @@ public class NoteController {
             userId = getIdFromAuthentication(authentication);
         }
 
-        return ApiResponse.success(noteService.getDetailNodesByShareToken(userId, shareToken), "获取笔记成功");
+        // 处理 cookie
+        boolean newVisitor = isNewVisitor(visitorId);
+        if(newVisitor) {
+            visitorId = UUID.randomUUID().toString();
+        }
+
+        // 调 service
+        GetDetailNodesByShareTokenResponse response = noteService.getDetailNodesByShareToken(userId, shareToken, visitorId);
+
+        ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+
+        // 设置响应头 set-cookie
+        if(newVisitor) {
+            ResponseCookie cookie = ResponseCookie
+                    .from("visitorId", visitorId)
+                    .httpOnly(true)
+                    .secure(cookieSecure)
+                    .sameSite("Lax")
+                    .path("/")
+                    .maxAge(Duration.ofDays(365))
+                    .build();
+
+            bodyBuilder.header(HttpHeaders.SET_COOKIE, cookie.toString());
+        }
+
+        return bodyBuilder.body(ApiResponse.success(response, "获取笔记成功"));
     }
 
     @GetMapping("/share")
@@ -295,11 +323,27 @@ public class NoteController {
         return ApiResponse.success("更新文章成功");
     }
 
+    private boolean isNewVisitor(String visitorId){
+        if(visitorId == null || visitorId.isBlank()) {
+            return true;
+        }
+        else {
+            try {
+                UUID.fromString(visitorId);
+                return false;
+            } catch (IllegalArgumentException e){
+                return true;
+            }
+        }
+    }
+
     @GetMapping("/shared/article/{detailNodeId}/{shareToken}")
-    public ApiResponse<FetchArticleResponse> getArticleByDetailNodeIdAndShareToken(
+    public ResponseEntity<ApiResponse<FetchArticleResponse>> getArticleByDetailNodeIdAndShareToken(
             Authentication authentication,
             @PathVariable("detailNodeId") Long detailNodeId,
-            @PathVariable("shareToken") String shareToken
+            @PathVariable("shareToken") String shareToken,
+            @CookieValue(value = "visitorId", required = false)
+            String visitorId
     ) {
         // 处理匿名用户访问接口
         Long userId = null;
@@ -308,6 +352,31 @@ public class NoteController {
             userId = getIdFromAuthentication(authentication);
         }
 
-        return ApiResponse.success(noteService.getArticleByDetailNodeIdAndShareToken(userId, detailNodeId, shareToken), "获取文章成功");
+        // 处理 cookie
+        boolean newVisitor = isNewVisitor(visitorId);
+        if(newVisitor) {
+            visitorId = UUID.randomUUID().toString();
+        }
+
+        // 调 service
+        FetchArticleResponse response = noteService.getArticleByDetailNodeIdAndShareToken(userId, detailNodeId, shareToken, visitorId);
+
+        ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+
+        // 设置响应头 set-cookie
+        if(newVisitor) {
+            ResponseCookie cookie = ResponseCookie
+                    .from("visitorId", visitorId)
+                    .httpOnly(true)
+                    .secure(cookieSecure)
+                    .sameSite("Lax")
+                    .path("/")
+                    .maxAge(Duration.ofDays(365))
+                    .build();
+
+            bodyBuilder.header(HttpHeaders.SET_COOKIE, cookie.toString());
+        }
+
+        return bodyBuilder.body(ApiResponse.success(response, "获取文章成功"));
     }
 }

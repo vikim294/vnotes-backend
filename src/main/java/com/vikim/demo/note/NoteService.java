@@ -741,7 +741,7 @@ public class NoteService {
         }
     }
 
-    public GetDetailNodesByShareTokenResponse getDetailNodesByShareToken(Long userId, String shareToken) {
+    public GetDetailNodesByShareTokenResponse getDetailNodesByShareToken(Long userId, String shareToken, String visitorId) {
         // 校验 shareToken、status
         NoteShareRow noteShareRow = directoryNodeMapper.findNoteShareByShareToken(shareToken)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
@@ -786,7 +786,7 @@ public class NoteService {
         // owner 不产生访问记录
         if (userId == null || !directoryNodeMapper.hasDirectoryNode(userId, noteShareRow.directoryNodeId(), NodeType.DETAIL)) {
             // 记录访问
-            noteShareAccessLogAsyncService.createNoteShareAccessLog(noteShareRow.id(), NoteShareTarget.NOTE, noteShareRow.directoryNodeId());
+            noteShareAccessLogAsyncService.createNoteShareAccessLog(noteShareRow.id(), NoteShareTarget.NOTE, noteShareRow.directoryNodeId(), visitorId);
         }
 
         return new GetDetailNodesByShareTokenResponse(
@@ -833,14 +833,14 @@ public class NoteService {
         }
     }
 
-    public FetchArticleResponse getArticleByDetailNodeIdAndShareToken(Long userId, Long detailNodeId, String shareToken){
+    public FetchArticleResponse getArticleByDetailNodeIdAndShareToken(Long userId, Long detailNodeId, String shareToken, String visitorId){
         // 查 article
         GetNoteShareArticleRow row = articleMapper.getNoteShareArticle(detailNodeId, shareToken).orElseThrow(()->new BusinessException(ErrorCode.ARTICLE_NOT_FOUND));
 
         // owner 不产生访问记录
         if (userId == null || !directoryNodeMapper.hasDirectoryNode(userId, row.directoryNodeId(), NodeType.DETAIL)) {
             // 记录访问
-            noteShareAccessLogAsyncService.createNoteShareAccessLog(row.noteShareId(), NoteShareTarget.ARTICLE, detailNodeId);
+            noteShareAccessLogAsyncService.createNoteShareAccessLog(row.noteShareId(), NoteShareTarget.ARTICLE, detailNodeId, visitorId);
         }
 
         return new FetchArticleResponse(

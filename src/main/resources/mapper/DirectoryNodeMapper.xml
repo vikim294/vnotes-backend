@@ -240,6 +240,7 @@
                 WHEN logs.target = 'NOTE' THEN dir.label
                 WHEN logs.target = 'ARTICLE' THEN de.label
             END AS target_label,
+            logs.visitor_id,
             logs.created_at
         from note_share_access_logs logs
 

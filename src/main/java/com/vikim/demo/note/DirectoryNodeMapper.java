@@ -188,10 +188,10 @@ public interface DirectoryNodeMapper {
 
     // 新增访问记录
     @Insert("""
-             insert into note_share_access_logs(note_share_id, target, target_id)
-            values(#{noteShareId}, #{target}, #{targetId})
+            insert into note_share_access_logs(note_share_id, target, target_id, visitor_id)
+            values(#{noteShareId}, #{target}, #{targetId}, #{visitorId})
             """)
-    int createNoteShareAccessLog(@Param("noteShareId") Long noteShareId, @Param("target") NoteShareTarget target, @Param("targetId") Long targetId);
+    int createNoteShareAccessLog(@Param("noteShareId") Long noteShareId, @Param("target") NoteShareTarget target, @Param("targetId") Long targetId, @Param("visitorId") String visitorId);
 
     // 获取访问记录
     List<NoteShareAccessLogRow> fetchNoteShareAccessLogsByNoteShareId(@Param("noteShareId") Long noteShareId);

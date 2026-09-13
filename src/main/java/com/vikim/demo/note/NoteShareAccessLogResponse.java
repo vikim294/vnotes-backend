@@ -7,6 +7,7 @@ public record NoteShareAccessLogResponse(
         Long id,
         NoteShareTarget target,
         String targetLabel,
+        String visitorId,
         Instant createdAt
 ) {
     public static NoteShareAccessLogResponse from(NoteShareAccessLogRow row){
@@ -14,6 +15,7 @@ public record NoteShareAccessLogResponse(
                 row.id(),
                 row.target(),
                 row.targetLabel(),
+                row.visitorId(),
                 row.createdAt().toInstant(ZoneOffset.UTC)
         );
     }
