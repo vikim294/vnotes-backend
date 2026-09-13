@@ -231,4 +231,23 @@
                 #{id}
             </foreach>
     </update>
+
+    <select id="fetchNoteShareAccessLogsByNoteShareId" resultType="com.vikim.demo.note.NoteShareAccessLogRow">
+        select
+            logs.id,
+            logs.target,
+            CASE
+                WHEN logs.target = 'NOTE' THEN dir.label
+                WHEN logs.target = 'ARTICLE' THEN de.label
+            END AS target_label,
+            logs.created_at
+        from note_share_access_logs logs
+
+        left join directory_nodes dir on logs.target = 'NOTE' and dir.id = logs.target_id
+        left join detail_nodes de on logs.target = 'ARTICLE' and de.id = logs.target_id
+
+        where logs.note_share_id = #{noteShareId}
+
+        order by logs.created_at desc, logs.id desc
+    </select>
 </mapper>

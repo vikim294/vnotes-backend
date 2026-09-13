@@ -246,7 +246,7 @@ public class NoteController {
         return ApiResponse.success("取消分享成功");
     }
 
-    @GetMapping("/shared/{shareToken}")
+    @GetMapping("/shared/note/{shareToken}")
     public ApiResponse<GetDetailNodesByShareTokenResponse> getDetailNodesByShareToken(
             Authentication authentication,
             @PathVariable("shareToken") String shareToken
@@ -293,5 +293,21 @@ public class NoteController {
     ) {
         noteService.updateArticleByDetailNodeId(getIdFromAuthentication(authentication), detailNodeId, request.content());
         return ApiResponse.success("更新文章成功");
+    }
+
+    @GetMapping("/shared/article/{detailNodeId}/{shareToken}")
+    public ApiResponse<FetchArticleResponse> getArticleByDetailNodeIdAndShareToken(
+            Authentication authentication,
+            @PathVariable("detailNodeId") Long detailNodeId,
+            @PathVariable("shareToken") String shareToken
+    ) {
+        // 处理匿名用户访问接口
+        Long userId = null;
+
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            userId = getIdFromAuthentication(authentication);
+        }
+
+        return ApiResponse.success(noteService.getArticleByDetailNodeIdAndShareToken(userId, detailNodeId, shareToken), "获取文章成功");
     }
 }

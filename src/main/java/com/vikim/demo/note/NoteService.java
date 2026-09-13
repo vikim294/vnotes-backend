@@ -786,7 +786,7 @@ public class NoteService {
         // owner 不产生访问记录
         if (userId == null || !directoryNodeMapper.hasDirectoryNode(userId, noteShareRow.directoryNodeId(), NodeType.DETAIL)) {
             // 记录访问
-            noteShareAccessLogAsyncService.createNoteShareAccessLog(noteShareRow.id());
+            noteShareAccessLogAsyncService.createNoteShareAccessLog(noteShareRow.id(), NoteShareTarget.NOTE, noteShareRow.directoryNodeId());
         }
 
         return new GetDetailNodesByShareTokenResponse(
@@ -824,12 +824,30 @@ public class NoteService {
     }
 
     public FetchArticleResponse getArticleByDetailNodeId(Long userId, Long detailNodeId) {
-        return FetchArticleResponse.from(articleMapper.getArticleByDetailNodeId(userId, detailNodeId).orElseThrow(()->new BusinessException(ErrorCode.ARTICLE_NOT_FOUND)));
+        return FetchArticleResponse.from(articleMapper.getArticleByUserIdAndDetailNodeId(userId, detailNodeId).orElseThrow(()->new BusinessException(ErrorCode.ARTICLE_NOT_FOUND)));
     }
 
     public void updateArticleByDetailNodeId(Long userId, Long detailNodeId, String content) {
         if(articleMapper.updateArticleByDetailNodeId(userId, detailNodeId, content) != 1) {
             throw new BusinessException(ErrorCode.ARTICLE_NOT_FOUND);
         }
+    }
+
+    public FetchArticleResponse getArticleByDetailNodeIdAndShareToken(Long userId, Long detailNodeId, String shareToken){
+        // 查 article
+        GetNoteShareArticleRow row = articleMapper.getNoteShareArticle(detailNodeId, shareToken).orElseThrow(()->new BusinessException(ErrorCode.ARTICLE_NOT_FOUND));
+
+        // owner 不产生访问记录
+        if (userId == null || !directoryNodeMapper.hasDirectoryNode(userId, row.directoryNodeId(), NodeType.DETAIL)) {
+            // 记录访问
+            noteShareAccessLogAsyncService.createNoteShareAccessLog(row.noteShareId(), NoteShareTarget.ARTICLE, detailNodeId);
+        }
+
+        return new FetchArticleResponse(
+                row.id(),
+                row.content(),
+                row.createdAt().toInstant(ZoneOffset.UTC),
+                row.updatedAt().toInstant(ZoneOffset.UTC)
+        );
     }
 }

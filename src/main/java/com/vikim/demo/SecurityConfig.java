@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 "/health",
                                 "/uploads/**",
                                 "/oauth/**",
-                                "/note/shared/*"
+                                "/note/shared/note/*",
+                                "/note/shared/article/*/*"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

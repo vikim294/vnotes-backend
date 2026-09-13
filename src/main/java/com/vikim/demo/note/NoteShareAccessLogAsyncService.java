@@ -13,9 +13,9 @@ public class NoteShareAccessLogAsyncService {
     private final DirectoryNodeMapper directoryNodeMapper;
 
     @Async("logTaskExecutor")
-    public void createNoteShareAccessLog(Long noteShareId) {
+    public void createNoteShareAccessLog(Long noteShareId, NoteShareTarget target, Long targetId) {
         try {
-            directoryNodeMapper.createNoteShareAccessLog(noteShareId);
+            directoryNodeMapper.createNoteShareAccessLog(noteShareId, target, targetId);
         } catch (Exception e) {
             log.error("异步记录分享笔记访问失败, noteShareId={}", noteShareId, e);
         }
