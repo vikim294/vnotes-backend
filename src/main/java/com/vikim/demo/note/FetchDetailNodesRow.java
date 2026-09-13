@@ -14,6 +14,7 @@ public record FetchDetailNodesRow(
         BigDecimal imageWidth,
         BigDecimal imageHeight,
         DetailNodeContentType contentType,
+        boolean article,
         DetailNodeMarkType markType,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

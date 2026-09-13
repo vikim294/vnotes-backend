@@ -15,6 +15,7 @@ public record FetchDetailNodesResponse(
         BigDecimal imageWidth,
         BigDecimal imageHeight,
         DetailNodeContentType contentType,
+        boolean article,
         DetailNodeMarkType markType,
         Instant createdAt,
         Instant updatedAt
@@ -31,6 +32,7 @@ public record FetchDetailNodesResponse(
                 row.imageWidth(),
                 row.imageHeight(),
                 row.contentType(),
+                row.article(),
                 row.markType(),
                 row.createdAt().toInstant(ZoneOffset.UTC),
                 row.updatedAt().toInstant(ZoneOffset.UTC)

@@ -34,6 +34,7 @@ public class NoteService {
     private final DirectoryNodeTagMapper directoryNodeTagMapper;
     private final TagMapper tagMapper;
     private final NoteShareAccessLogAsyncService noteShareAccessLogAsyncService;
+    private final ArticleMapper articleMapper;
 
     public Long createDirectoryNode(Long userId, CreateDirectoryNodeRequest request) {
         if (request.parentId() != null && !directoryNodeMapper.hasDirectoryNode(userId, request.parentId(), NodeType.DIRECTORY)) {
@@ -306,6 +307,7 @@ public class NoteService {
                             row.imageWidth(),
                             row.imageHeight(),
                             row.contentType(),
+                            row.article(),
                             row.markType(),
                             row.createdAt().toInstant(ZoneOffset.UTC),
                             row.updatedAt().toInstant(ZoneOffset.UTC)
@@ -697,7 +699,7 @@ public class NoteService {
 
         // 尝试找分享记录
         Optional<NoteShareRow> optionalNoteShare = directoryNodeMapper.findNoteShareByDirectoryNodeId(directoryNodeId);
-        if(optionalNoteShare.isPresent()){
+        if (optionalNoteShare.isPresent()) {
             // 已存在分享记录
 
             // 如果 status 为 active 则返回已有 token
@@ -706,13 +708,12 @@ public class NoteService {
             }
 
             // 更新状态
-            if(directoryNodeMapper.activateNoteShare(directoryNodeId, shareToken) != 1) {
+            if (directoryNodeMapper.activateNoteShare(directoryNodeId, shareToken) != 1) {
                 throw new BusinessException(ErrorCode.UPDATE_NOTE_SHARE_FAILED);
             }
-        }
-        else {
+        } else {
             // 新增分享记录
-            if(directoryNodeMapper.createNoteShare(directoryNodeId, shareToken) != 1) {
+            if (directoryNodeMapper.createNoteShare(directoryNodeId, shareToken) != 1) {
                 throw new BusinessException(ErrorCode.CREATE_NOTE_SHARE_FAILED);
             }
         }
@@ -728,26 +729,26 @@ public class NoteService {
 
         // 尝试找分享记录
         NoteShareRow noteShareRow = directoryNodeMapper.findNoteShareByDirectoryNodeId(directoryNodeId)
-                .orElseThrow(()->new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
 
         // 如果 status 为 active 则返回
         if (noteShareRow.status() == NoteShareStatus.REVOKED) {
             throw new BusinessException(ErrorCode.NOTE_HAS_ALREADY_REVOKED);
         }
 
-        if(directoryNodeMapper.cancelNoteShare(directoryNodeId) != 1) {
+        if (directoryNodeMapper.cancelNoteShare(directoryNodeId) != 1) {
             throw new BusinessException(ErrorCode.UPDATE_NOTE_SHARE_FAILED);
         }
     }
 
-    public GetDetailNodesByShareTokenResponse getDetailNodesByShareToken(Long userId, String shareToken){
+    public GetDetailNodesByShareTokenResponse getDetailNodesByShareToken(Long userId, String shareToken) {
         // 校验 shareToken、status
         NoteShareRow noteShareRow = directoryNodeMapper.findNoteShareByShareToken(shareToken)
-                .orElseThrow(()->new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
 
         // 查 directory node
         List<DirectoryNodeWithTagRow> rows = directoryNodeMapper.getDirectoryNodesByIds(List.of(noteShareRow.directoryNodeId()));
-        if(rows.isEmpty()) {
+        if (rows.isEmpty()) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
         }
 
@@ -775,6 +776,7 @@ public class NoteService {
                             row.imageWidth(),
                             row.imageHeight(),
                             row.contentType(),
+                            row.article(),
                             row.markType(),
                             row.createdAt().toInstant(ZoneOffset.UTC),
                             row.updatedAt().toInstant(ZoneOffset.UTC)
@@ -782,7 +784,7 @@ public class NoteService {
                 }).toList();
 
         // owner 不产生访问记录
-        if(userId == null || !directoryNodeMapper.hasDirectoryNode(userId, noteShareRow.directoryNodeId(), NodeType.DETAIL)){
+        if (userId == null || !directoryNodeMapper.hasDirectoryNode(userId, noteShareRow.directoryNodeId(), NodeType.DETAIL)) {
             // 记录访问
             noteShareAccessLogAsyncService.createNoteShareAccessLog(noteShareRow.id());
         }
@@ -802,7 +804,7 @@ public class NoteService {
 
         // 尝试找分享记录
         NoteShareRow noteShareRow = directoryNodeMapper.findNoteShareByDirectoryNodeId(directoryNodeId)
-                .orElseThrow(()->new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND));
 
         return NoteShareResponse.from(noteShareRow);
     }
@@ -819,5 +821,15 @@ public class NoteService {
         return rows.stream()
                 .map(NoteShareAccessLogResponse::from)
                 .toList();
+    }
+
+    public FetchArticleResponse getArticleByDetailNodeId(Long userId, Long detailNodeId) {
+        return FetchArticleResponse.from(articleMapper.getArticleByDetailNodeId(userId, detailNodeId).orElseThrow(()->new BusinessException(ErrorCode.ARTICLE_NOT_FOUND)));
+    }
+
+    public void updateArticleByDetailNodeId(Long userId, Long detailNodeId, String content) {
+        if(articleMapper.updateArticleByDetailNodeId(userId, detailNodeId, content) != 1) {
+            throw new BusinessException(ErrorCode.ARTICLE_NOT_FOUND);
+        }
     }
 }

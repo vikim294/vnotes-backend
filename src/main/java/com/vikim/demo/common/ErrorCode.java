@@ -174,6 +174,12 @@ public enum ErrorCode {
             "无法取消分享未被分享的笔记"
     ),
 
+    ARTICLE_NOT_FOUND(
+            40024,
+            HttpStatus.BAD_REQUEST,
+            "文章未找到"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -185,8 +191,6 @@ public enum ErrorCode {
             HttpStatus.INTERNAL_SERVER_ERROR,
             "创建目录节点失败"
     ),
-
-
 
     DIRECTORY_NODE_UPDATED_PARENT_FAILED(
             50004,
@@ -206,19 +210,17 @@ public enum ErrorCode {
             "批量删除目录节点失败"
     ),
 
-    DIRECTORY_NODE_BATCH_RESTORE_FAILED(
-            50008,
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "批量恢复目录节点失败"
-    ),
-
     DETAIL_NODE_CREATED_FAILED(
             50007,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "创建详情节点失败"
     ),
 
-
+    DIRECTORY_NODE_BATCH_RESTORE_FAILED(
+            50008,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "批量恢复目录节点失败"
+    ),
 
     DETAIL_NODE_UPDATED_PARENT_FAILED(
             50009,
@@ -338,6 +340,12 @@ public enum ErrorCode {
             50028,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "新增笔记分享失败"
+    ),
+
+    CREATE_ARTICLE_FAILED(
+            50029,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "新增文章失败"
     ),
 
     ;

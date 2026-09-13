@@ -2,19 +2,18 @@ package com.vikim.demo.note;
 
 import com.vikim.demo.common.BusinessException;
 import com.vikim.demo.common.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class DetailNodeTransactionService {
 
     private final DetailNodeMapper detailNodeMapper;
-
-    public DetailNodeTransactionService( DetailNodeMapper detailNodeMapper) {
-        this.detailNodeMapper = detailNodeMapper;
-    }
+    private final ArticleMapper articleMapper;
 
     // 插入、更新 数据库操作
     @Transactional
@@ -42,6 +41,13 @@ public class DetailNodeTransactionService {
             int affectedRows = detailNodeMapper.createDetailNode(param);
             if (affectedRows != 1 || param.getId() == null) {
                 throw new BusinessException(ErrorCode.DETAIL_NODE_CREATED_FAILED);
+            }
+
+            if(addedNode.isArticle()) {
+                // 创建 article
+                if(articleMapper.createArticleForDetailNode(param.getId()) != 1) {
+                    throw new BusinessException(ErrorCode.CREATE_ARTICLE_FAILED);
+                }
             }
 
             // 保存 uuid -> id

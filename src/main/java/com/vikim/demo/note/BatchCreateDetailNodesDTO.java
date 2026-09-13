@@ -1,8 +1,6 @@
 package com.vikim.demo.note;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -38,6 +36,7 @@ public class BatchCreateDetailNodesDTO{
         @NotNull(message = "节点内容类型不能为空")
         private DetailNodeContentType contentType;
 
-        private DetailNodeMarkType markType;
+        private boolean article;
 
+        private DetailNodeMarkType markType;
 }

@@ -166,7 +166,7 @@ public class NoteController {
     @GetMapping("/export/json")
     public ResponseEntity<byte[]> exportNotesToJson(
             Authentication authentication
-    ){
+    ) {
         ExportNotesToJsonResponse response = exportService.exportNotesToJson(getIdFromAuthentication(authentication));
 
         byte[] bytes = objectMapper
@@ -224,8 +224,8 @@ public class NoteController {
     public ApiResponse<List<TagResponse>> getTagsByDirectoryNodeId(
             Authentication authentication,
             @PathVariable("id") Long directoryNodeId
-    ){
-        return ApiResponse.success(noteService.getTagsByDirectoryNodeId(getIdFromAuthentication(authentication), directoryNodeId),"获取笔记标签成功");
+    ) {
+        return ApiResponse.success(noteService.getTagsByDirectoryNodeId(getIdFromAuthentication(authentication), directoryNodeId), "获取笔记标签成功");
     }
 
     @PostMapping("/share")
@@ -233,7 +233,7 @@ public class NoteController {
             Authentication authentication,
             @RequestParam("directoryNodeId")
             Long directoryNodeId
-    ){
+    ) {
         return ApiResponse.success(noteService.shareNote(getIdFromAuthentication(authentication), directoryNodeId), "分享笔记成功");
     }
 
@@ -241,7 +241,7 @@ public class NoteController {
     public ApiResponse<Void> unshareNote(
             Authentication authentication,
             @RequestParam("directoryNodeId") Long directoryNodeId
-    ){
+    ) {
         noteService.unshareNote(getIdFromAuthentication(authentication), directoryNodeId);
         return ApiResponse.success("取消分享成功");
     }
@@ -250,22 +250,22 @@ public class NoteController {
     public ApiResponse<GetDetailNodesByShareTokenResponse> getDetailNodesByShareToken(
             Authentication authentication,
             @PathVariable("shareToken") String shareToken
-    ){
+    ) {
         // 处理匿名用户访问接口
         Long userId = null;
 
-        if(authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             userId = getIdFromAuthentication(authentication);
         }
 
-        return ApiResponse.success(noteService.getDetailNodesByShareToken(userId, shareToken),"获取笔记成功");
+        return ApiResponse.success(noteService.getDetailNodesByShareToken(userId, shareToken), "获取笔记成功");
     }
 
     @GetMapping("/share")
     public ApiResponse<NoteShareResponse> getNoteShareByDirectoryNodeId(
             Authentication authentication,
             @RequestParam("directoryNodeId") Long directoryNodeId
-    ){
+    ) {
         return ApiResponse.success(noteService.getNoteShareByDirectoryNodeId(getIdFromAuthentication(authentication), directoryNodeId), "获取分享详情成功");
     }
 
@@ -273,7 +273,25 @@ public class NoteController {
     public ApiResponse<List<NoteShareAccessLogResponse>> fetchNoteShareAccessLogsByNoteShareId(
             Authentication authentication,
             @PathVariable("id") Long noteShareId
-    ){
+    ) {
         return ApiResponse.success(noteService.fetchNoteShareAccessLogsByNoteShareId(getIdFromAuthentication(authentication), noteShareId), "获取分享访问记录成功");
+    }
+
+    @GetMapping("/article/{detailNodeId}")
+    public ApiResponse<FetchArticleResponse> getArticleByDetailNodeId(
+            Authentication authentication,
+            @PathVariable("detailNodeId") Long detailNodeId
+    ) {
+        return ApiResponse.success(noteService.getArticleByDetailNodeId(getIdFromAuthentication(authentication), detailNodeId), "获取文章成功");
+    }
+
+    @PatchMapping("/article/{detailNodeId}")
+    public ApiResponse<Void> updateArticleByDetailNodeId(
+            Authentication authentication,
+            @PathVariable("detailNodeId") Long detailNodeId,
+            @RequestBody UpdateArticleRequest request
+    ) {
+        noteService.updateArticleByDetailNodeId(getIdFromAuthentication(authentication), detailNodeId, request.content());
+        return ApiResponse.success("更新文章成功");
     }
 }
