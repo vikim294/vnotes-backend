@@ -2,6 +2,7 @@ package com.vikim.demo.note;
 
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @Mapper
@@ -54,4 +55,6 @@ public interface ArticleMapper {
                 and dir.deleted_at is null
             """)
     int updateArticleByDetailNodeId(@Param("userId") Long userId, @Param("detailNodeId") Long detailNodeId, @Param("content") String content);
+
+    List<ExportArticleVO> getExportArticlesByDetailNodeIds(@Param("detailNodeIds") List<Long> detailNodeIds);
 }

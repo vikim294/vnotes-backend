@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.vikim.demo.note.ArticleMapper">
+
+    <select id="getExportArticlesByDetailNodeIds" resultType="com.vikim.demo.note.ExportArticleVO">
+        select ar.id as source_id, ar.detail_node_id as source_detail_node_id, ar.content, ar.created_at, ar.updated_at
+        from articles ar
+        join detail_nodes de on de.id = ar.detail_node_id
+        where de.id in
+            <foreach collection="detailNodeIds"
+                     item="detailNodeId"
+                     open="("
+                     separator=","
+                     close=")">
+                #{detailNodeId}
+            </foreach>
+    </select>
+
+</mapper>

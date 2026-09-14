@@ -7,6 +7,7 @@ public record ExportNotesToJsonResponse(
         String version,
         LocalDateTime exportAt,
         List<ExportDirectoryNodeVO> directoryNodes,
-        List<ExportDetailNodeVO> detailNodes
+        List<ExportDetailNodeVO> detailNodes,
+        List<ExportArticleVO> articles
 ) {
 }

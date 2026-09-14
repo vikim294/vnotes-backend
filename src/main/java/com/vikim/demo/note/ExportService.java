@@ -13,13 +13,17 @@ import java.util.List;
 public class ExportService {
     private final DirectoryNodeMapper directoryNodeMapper;
     private final DetailNodeMapper detailNodeMapper;
+    private final ArticleMapper articleMapper;
 
     @Transactional(readOnly = true)
     public ExportNotesToJsonResponse exportNotesToJson(Long userId) {
-        String version = "1";
+        // 1 只导出目录和详情节点，不包含图片
+        // 2 文章也导出
+        String version = "2";
         LocalDateTime exportAt = LocalDateTime.now();
         List<ExportDirectoryNodeVO> directoryNodes = directoryNodeMapper.getExportDirectoryNodes(userId);
         List<ExportDetailNodeVO> detailNodes = new ArrayList<>();
+        List<ExportArticleVO> articles = new ArrayList<>();
 
         List<Long> directoryNodeIdsWithDetail = directoryNodes.stream()
                 .filter(d -> d.nodeType() == NodeType.DETAIL)
@@ -30,6 +34,12 @@ public class ExportService {
             detailNodes = detailNodeMapper.getExportDetailNodesByDirectoryNodeIds(directoryNodeIdsWithDetail);
         }
 
-        return new ExportNotesToJsonResponse(version, exportAt, directoryNodes, detailNodes);
+        if(!detailNodes.isEmpty()) {
+            articles = articleMapper.getExportArticlesByDetailNodeIds(detailNodes.stream()
+                    .map(ExportDetailNodeVO::sourceId)
+                    .toList());
+        }
+
+        return new ExportNotesToJsonResponse(version, exportAt, directoryNodes, detailNodes, articles);
     }
 }
