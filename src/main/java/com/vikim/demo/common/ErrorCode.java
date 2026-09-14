@@ -198,6 +198,12 @@ public enum ErrorCode {
             "OAuth 账号不支持该操作"
     ),
 
+    INVALID_ARTICLE_RELATION(
+            40028,
+            HttpStatus.BAD_REQUEST,
+            "错误的详情节点-文章关系"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,

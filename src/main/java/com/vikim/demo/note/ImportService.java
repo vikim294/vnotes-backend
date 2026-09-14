@@ -18,6 +18,7 @@ public class ImportService {
     private final ImportTransactionService importTransactionService;
     private final NoteTransactionService noteTransactionService;
     private final DirectoryNodeMapper directoryNodeMapper;
+    private final ArticleMapper articleMapper;
 
     @Transactional
     public void importJsonNotes(Long userId, ImportStrategy strategy, MultipartFile file) {
@@ -33,10 +34,15 @@ public class ImportService {
         }
 
         // TODO 校验
-        if (!"1".equals(data.version())) {
+        // 支持的版本
+        List<String> validVersions = List.of("1", "2");
+
+        // 校验版本
+        if (data.version() == null || !validVersions.contains(data.version())) {
             throw new BusinessException(ErrorCode.UNSUPPORTED_VERSION);
         }
 
+        // 文件格式有问题
         if (data.directoryNodes() == null || data.detailNodes() == null) {
             throw new BusinessException(ErrorCode.READ_IMPORTED_FILE_FAILED);
         }
@@ -84,6 +90,37 @@ public class ImportService {
                     data.detailNodes(),
                     detailNodeSourceIdToIdMap
             );
+        }
+
+        // 如果是版本 2 并且有文章，再创建文章
+
+        if("2".equals(data.version())) {
+            // 文件格式有问题
+            if(data.articles() == null) {
+                throw new BusinessException(ErrorCode.READ_IMPORTED_FILE_FAILED);
+            }
+
+            for (ImportArticleDTO articleDTO : data.articles()) {
+                // 逐个创建 Article 并关联 detailNode
+                Long realDetailNodeId = detailNodeSourceIdToIdMap.get(articleDTO.sourceDetailNodeId());
+
+                // 如果当前文章不存在关联的 detail node
+                if(realDetailNodeId == null) {
+                    throw new BusinessException(ErrorCode.INVALID_ARTICLE_RELATION);
+                }
+
+                // 创建文章
+                int affectedRows = articleMapper.createArticleForDetailNodeFromImportArticle(new CreateArticleForDetailNodeFromImportArticleMapperParam(
+                        realDetailNodeId,
+                        articleDTO.content(),
+                        articleDTO.createdAt(),
+                        articleDTO.updatedAt()
+                ));
+
+                if(affectedRows != 1) {
+                    throw new BusinessException(ErrorCode.CREATE_ARTICLE_FAILED);
+                }
+            }
         }
     }
 }

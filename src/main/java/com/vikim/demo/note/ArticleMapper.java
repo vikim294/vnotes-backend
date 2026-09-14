@@ -14,6 +14,12 @@ public interface ArticleMapper {
             """)
     int createArticleForDetailNode(@Param("detailNodeId") Long detailNodeId);
 
+    @Insert("""
+            insert into articles(detail_node_id, content, created_at, updated_at)
+            values(#{detailNodeId}, #{content}, #{createdAt}, #{updatedAt})
+            """)
+    int createArticleForDetailNodeFromImportArticle(CreateArticleForDetailNodeFromImportArticleMapperParam param);
+
     @Select("""
             select ar.id, ar.content, ar.created_at, ar.updated_at
             from articles ar
