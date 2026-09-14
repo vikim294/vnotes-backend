@@ -33,6 +33,13 @@ public interface UserMapper {
             """)
     Optional<User> findByEmail(String email);
 
+    @Select("""
+        select id, username, email, password_hash
+        from users
+        where id = #{id}
+    """)
+    Optional<User> findById(Long id);
+
     @Update("""
             update users
             set avatar_url = #{avatarUrl}
@@ -53,4 +60,13 @@ public interface UserMapper {
             """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int createUserForOAuthAccount(CreateUserForOAuthAccountParam param);
+
+    // 更新时携带原哈希，避免并发请求时 可能覆盖更新（有点类似乐观锁 version）
+    @Update("""
+            update users
+            set password_hash = #{newPasswordHash}
+            where id = #{userId}
+                and password_hash = #{oldPasswordHash}
+            """)
+    int changePassword(@Param("userId") Long userId, @Param("oldPasswordHash") String oldPasswordHash, @Param("newPasswordHash") String newPasswordHash);
 }

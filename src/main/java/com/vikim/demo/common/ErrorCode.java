@@ -180,6 +180,24 @@ public enum ErrorCode {
             "文章未找到"
     ),
 
+    INVALID_PASSWORD_INPUT(
+            40025,
+            HttpStatus.BAD_REQUEST,
+            "新旧密码请求参数不能一样"
+    ),
+
+    INCORRECT_OLD_PASSWORD(
+            40026,
+            HttpStatus.BAD_REQUEST,
+            "旧密码输入错误"
+    ),
+
+    UNSUPPORTED_FOR_OAUTH_ACCOUNT(
+            40027,
+            HttpStatus.BAD_REQUEST,
+            "OAuth 账号不支持该操作"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -346,6 +364,12 @@ public enum ErrorCode {
             50029,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "新增文章失败"
+    ),
+
+    CHANGE_PASSWORD_FAILED(
+            50030,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "修改密码失败"
     ),
 
     ;

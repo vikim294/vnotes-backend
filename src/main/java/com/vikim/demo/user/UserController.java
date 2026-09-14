@@ -53,4 +53,12 @@ public class UserController {
         return ApiResponse.success(response, "上传头像成功");
     }
 
+    @PostMapping("/change-password")
+    public ApiResponse<Void> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        userService.changePassword(getIdFromAuthentication(authentication), request.oldPassword(), request.newPassword());
+        return ApiResponse.success("修改密码成功");
+    }
 }

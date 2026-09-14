@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -197,5 +198,31 @@ public class UserService {
         }
 
         return new UploadAvatarResponse(objectStorageService.generatePresignedUrl(objectKey));
+    }
+
+    public void changePassword(Long userId, String oldPassword, String newPassword){
+        // 请求参数相同则返回
+        if(Objects.equals(oldPassword, newPassword)) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD_INPUT);
+        }
+
+        User user = userMapper.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // Oauth 账号不支持修改密码
+        if(user.getPasswordHash() == null) {
+            throw new BusinessException(ErrorCode.UNSUPPORTED_FOR_OAUTH_ACCOUNT);
+        }
+
+        // 旧密码不正确
+        if(!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.INCORRECT_OLD_PASSWORD);
+        }
+
+        // 计算新密码的 hash
+        String newPasswordHash = passwordEncoder.encode(newPassword);
+
+        if(userMapper.changePassword(userId, user.getPasswordHash(), newPasswordHash) != 1) {
+            throw new BusinessException(ErrorCode.CHANGE_PASSWORD_FAILED);
+        }
     }
 }
