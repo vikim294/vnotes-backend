@@ -28,7 +28,10 @@ public class CreateDetailNodeMapperParam {
 
     private DetailNodeMarkType markType;
 
-    public CreateDetailNodeMapperParam(Long directoryNodeId, String label, String imageUrl, BigDecimal x, BigDecimal y, BigDecimal imageWidth, BigDecimal imageHeight, DetailNodeContentType contentType, DetailNodeMarkType markType) {
+    private Long refDirectoryNodeId;
+    private Long refDetailNodeId;
+
+    public CreateDetailNodeMapperParam(Long directoryNodeId, String label, String imageUrl, BigDecimal x, BigDecimal y, BigDecimal imageWidth, BigDecimal imageHeight, DetailNodeContentType contentType, DetailNodeMarkType markType, Long refDirectoryNodeId, Long refDetailNodeId) {
         this.directoryNodeId = directoryNodeId;
         this.label = label;
         this.imageUrl = imageUrl;
@@ -38,5 +41,7 @@ public class CreateDetailNodeMapperParam {
         this.imageHeight = imageHeight;
         this.contentType = contentType;
         this.markType = markType;
+        this.refDirectoryNodeId = refDirectoryNodeId;
+        this.refDetailNodeId = refDetailNodeId;
     }
 }

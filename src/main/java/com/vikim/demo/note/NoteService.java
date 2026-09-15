@@ -309,6 +309,8 @@ public class NoteService {
                             row.contentType(),
                             row.article(),
                             row.markType(),
+                            row.refDirectoryNodeId(),
+                            row.refDetailNodeId(),
                             row.createdAt().toInstant(ZoneOffset.UTC),
                             row.updatedAt().toInstant(ZoneOffset.UTC)
                     );
@@ -499,16 +501,73 @@ public class NoteService {
         }
 
         for (BatchCreateDetailNodesDTO addedNode : request.added()) {
-            // 校验：added 的文本节点对应的 label 是否为空
+            // 文本节点
             if (addedNode.getContentType() == DetailNodeContentType.TEXT) {
+                // 校验：added 的文本节点对应的 label 是否为空
                 if (addedNode.getLabel() == null || addedNode.getLabel().trim().isBlank()) {
                     throw new BusinessException(ErrorCode.TEXT_NODE_LABEL_IS_NULL);
+                }
+
+                // 校验节点 contentType 和 ref_directory_node_id, ref_detail_node_id
+                if(addedNode.getRefDirectoryNodeId() != null || addedNode.getRefDetailNodeId() != null) {
+                    throw new BusinessException(ErrorCode.INVALID_REF_ON_TEXT_NODE);
+                }
+            }
+
+            // 图片节点
+            if(addedNode.getContentType() == DetailNodeContentType.IMAGE) {
+                if(addedNode.getRefDirectoryNodeId() != null || addedNode.getRefDetailNodeId() != null) {
+                    throw new BusinessException(ErrorCode.INVALID_REF_ON_IMAGE_NODE);
+                }
+            }
+
+            // 引用节点：笔记节点
+            if(addedNode.getContentType() == DetailNodeContentType.REF_NOTE) {
+                if (addedNode.getLabel() == null || addedNode.getLabel().trim().isBlank()) {
+                    throw new BusinessException(ErrorCode.REF_NODE_LABEL_IS_NULL);
+                }
+
+                if(addedNode.getRefDirectoryNodeId() == null) {
+                    throw new BusinessException(ErrorCode.REF_NODE_MISSING_VALUE);
+                }
+
+                if(addedNode.getRefDetailNodeId() != null) {
+                    throw new BusinessException(ErrorCode.NODE_REF_MUST_BE_ONLY_ONE);
+                }
+
+                // 引用节点 isArticle 必须为 false
+                if(addedNode.isArticle()) {
+                    throw new BusinessException(ErrorCode.REF_NODE_SHOULD_NOT_HAVE_ARTICLE);
+                }
+            }
+
+            // 引用节点：详情节点 or 文章节点
+            if(addedNode.getContentType() == DetailNodeContentType.REF_DETAIL || addedNode.getContentType() == DetailNodeContentType.REF_ARTICLE) {
+                if (addedNode.getLabel() == null || addedNode.getLabel().trim().isBlank()) {
+                    throw new BusinessException(ErrorCode.REF_NODE_LABEL_IS_NULL);
+                }
+
+                if(addedNode.getRefDetailNodeId() == null) {
+                    throw new BusinessException(ErrorCode.REF_NODE_MISSING_VALUE);
+                }
+
+                if(addedNode.getRefDirectoryNodeId() != null) {
+                    throw new BusinessException(ErrorCode.NODE_REF_MUST_BE_ONLY_ONE);
+                }
+
+                // 引用节点 isArticle 必须为 false
+                if(addedNode.isArticle()) {
+                    throw new BusinessException(ErrorCode.REF_NODE_SHOULD_NOT_HAVE_ARTICLE);
+                }
+
+                // 新增的引用节点 不能引用 将被删除的节点
+                if(deletedIdsToBeVerified.contains(addedNode.getRefDetailNodeId())) {
+                    throw new BusinessException(ErrorCode.NODE_REF_IS_TO_BE_DELETED);
                 }
             }
         }
 
         for (BatchUpdateDetailNodesDTO updatedNode : request.updated()) {
-            // 校验：updated 的文本节点对应的 label 是否为空
             FetchDetailNodesRow existingNode =
                     detailNodeMapper
                             .getDetailNodeById(
@@ -521,10 +580,50 @@ public class NoteService {
                                     )
                             );
             if (existingNode.contentType() == DetailNodeContentType.TEXT) {
+                // 校验：updated 的文本节点对应的 label 是否为空
                 if (updatedNode.getLabel() == null || updatedNode.getLabel().trim().isBlank()) {
                     throw new BusinessException(ErrorCode.TEXT_NODE_LABEL_IS_NULL);
                 }
+
+//                // 校验节点 contentType 和 ref_directory_node_id, ref_detail_node_id
+//                if(updatedNode.getRefDirectoryNodeId() != null || updatedNode.getRefDetailNodeId() != null) {
+//                    throw new BusinessException(ErrorCode.INVALID_REF_ON_TEXT_NODE);
+//                }
             }
+
+//            if(existingNode.contentType() == DetailNodeContentType.IMAGE) {
+//                if(updatedNode.getRefDirectoryNodeId() != null || updatedNode.getRefDetailNodeId() != null) {
+//                    throw new BusinessException(ErrorCode.INVALID_REF_ON_IMAGE_NODE);
+//                }
+//            }
+//
+//            if(existingNode.contentType() == DetailNodeContentType.REF_NOTE) {
+//                if (updatedNode.getLabel() == null || updatedNode.getLabel().trim().isBlank()) {
+//                    throw new BusinessException(ErrorCode.REF_NODE_LABEL_IS_NULL);
+//                }
+//
+//                if(updatedNode.getRefDirectoryNodeId() == null) {
+//                    throw new BusinessException(ErrorCode.REF_NODE_MISSING_VALUE);
+//                }
+//
+//                if(updatedNode.getRefDetailNodeId() != null) {
+//                    throw new BusinessException(ErrorCode.NODE_REF_MUST_BE_ONLY_ONE);
+//                }
+//            }
+//
+//            if(existingNode.contentType() == DetailNodeContentType.REF_DETAIL || existingNode.contentType() == DetailNodeContentType.REF_ARTICLE) {
+//                if (updatedNode.getLabel() == null || updatedNode.getLabel().trim().isBlank()) {
+//                    throw new BusinessException(ErrorCode.REF_NODE_LABEL_IS_NULL);
+//                }
+//
+//                if(updatedNode.getRefDetailNodeId() == null) {
+//                    throw new BusinessException(ErrorCode.REF_NODE_MISSING_VALUE);
+//                }
+//
+//                if(updatedNode.getRefDirectoryNodeId() != null) {
+//                    throw new BusinessException(ErrorCode.NODE_REF_MUST_BE_ONLY_ONE);
+//                }
+//            }
         }
 
         List<BatchCreateDetailNodesDTO> imageNodes = request.added().stream().filter(node -> node.getContentType() == DetailNodeContentType.IMAGE).toList();
@@ -778,6 +877,8 @@ public class NoteService {
                             row.contentType(),
                             row.article(),
                             row.markType(),
+                            row.refDirectoryNodeId(),
+                            row.refDetailNodeId(),
                             row.createdAt().toInstant(ZoneOffset.UTC),
                             row.updatedAt().toInstant(ZoneOffset.UTC)
                     );
@@ -849,5 +950,9 @@ public class NoteService {
                 row.createdAt().toInstant(ZoneOffset.UTC),
                 row.updatedAt().toInstant(ZoneOffset.UTC)
         );
+    }
+
+    public GetDirectoryNodeByIdResponse getDirectoryNodeById(Long userId, Long id){
+        return directoryNodeMapper.getDirectoryNodeById(userId, id).orElseThrow(() -> new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND));
     }
 }

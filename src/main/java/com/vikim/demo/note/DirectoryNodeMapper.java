@@ -208,4 +208,14 @@ public interface DirectoryNodeMapper {
             )
             """)
     boolean hasUserSharedNote(@Param("userId") Long userId, @Param("noteShareId") Long noteShareId);
+
+    @Select("""
+            select id, label, node_type
+            from directory_nodes
+            where id = #{id}
+                and user_id = #{userId}
+                and node_type = 'DETAIL'
+                and deleted_at is null
+            """)
+    Optional<GetDirectoryNodeByIdResponse> getDirectoryNodeById(@Param("userId") Long userId, @Param("id") Long id);
 }

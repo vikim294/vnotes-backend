@@ -11,7 +11,7 @@ import java.util.Set;
 public interface DetailNodeMapper {
 
     @Select("""
-            select dn.id, dn.parent_id, dn.directory_node_id, dn.label, dn.image_url, dn.x, dn.y, dn.image_width, dn.image_height, dn.content_type, ar.id is not null as article, dn.mark_type, dn.created_at, dn.updated_at
+            select dn.id, dn.parent_id, dn.directory_node_id, dn.label, dn.image_url, dn.x, dn.y, dn.image_width, dn.image_height, dn.content_type, ar.id is not null as article, dn.mark_type, dn.ref_directory_node_id, dn.ref_detail_node_id, dn.created_at, dn.updated_at
             from detail_nodes dn
             left join articles ar on ar.detail_node_id = dn.id
             where directory_node_id = #{directoryNodeId}
@@ -42,7 +42,7 @@ public interface DetailNodeMapper {
     );
 
     @Select("""
-            select dn.id, dn.parent_id, dn.directory_node_id, dn.label, dn.image_url, dn.x, dn.y, dn.image_width, dn.image_height, dn.content_type, ar.id is not null as article, dn.mark_type, dn.created_at, dn.updated_at
+            select dn.id, dn.parent_id, dn.directory_node_id, dn.label, dn.image_url, dn.x, dn.y, dn.image_width, dn.image_height, dn.content_type, ar.id is not null as article, dn.mark_type, dn.ref_directory_node_id, dn.ref_detail_node_id, dn.created_at, dn.updated_at
             from detail_nodes dn
             left join articles ar on ar.detail_node_id = dn.id
             where dn.id = #{id} and dn.directory_node_id = #{directoryNodeId}
@@ -64,4 +64,6 @@ public interface DetailNodeMapper {
     List<FindImageNodesByDirectoryNodesWithDetailResponse> findImageNodesByDirectoryNodesWithDetail(@Param("ids") List<Long> ids);
 
     int moveDetailNode(@Param("detailNodeId") Long detailNodeId, @Param("oldDirectoryNodeId") Long oldDirectoryNodeId, @Param("destDirectoryNodeId") Long destDirectoryNodeId, @Param("offsetX") BigDecimal offsetX, @Param("offsetY") BigDecimal offsetY);
+
+    boolean validateRefNodeForCreate(@Param("refType") DetailNodeContentType refType, @Param("refId") Long refId, @Param("directoryNodeId") Long directoryNodeId);
 }

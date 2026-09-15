@@ -204,6 +204,54 @@ public enum ErrorCode {
             "错误的详情节点-文章关系"
     ),
 
+    INVALID_REF_ON_TEXT_NODE(
+            40029,
+            HttpStatus.BAD_REQUEST,
+            "文本节点不能有引用"
+    ),
+
+    INVALID_REF_ON_IMAGE_NODE(
+            40030,
+            HttpStatus.BAD_REQUEST,
+            "图片节点不能有引用"
+    ),
+
+    NODE_REF_MUST_BE_ONLY_ONE(
+            40031,
+            HttpStatus.BAD_REQUEST,
+            "引用节点的引用必须唯一"
+    ),
+
+    REF_NODE_MISSING_VALUE(
+            40032,
+            HttpStatus.BAD_REQUEST,
+            "引用节点的引用缺失"
+    ),
+
+    REF_NODE_SHOULD_NOT_HAVE_ARTICLE(
+            40033,
+            HttpStatus.BAD_REQUEST,
+            "引用节点不能有文章"
+    ),
+
+    REF_NODE_VALIDATED_FAILED(
+            40034,
+            HttpStatus.BAD_REQUEST,
+            "引用节点校验失败"
+    ),
+
+    REF_NODE_LABEL_IS_NULL(
+            40035,
+            HttpStatus.BAD_REQUEST,
+            "引用节点 label 不能为空"
+    ),
+
+    NODE_REF_IS_TO_BE_DELETED(
+            40036,
+            HttpStatus.BAD_REQUEST,
+            "引用了将要被删除的详情节点"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,

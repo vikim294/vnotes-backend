@@ -17,6 +17,8 @@ public record FetchDetailNodesResponse(
         DetailNodeContentType contentType,
         boolean article,
         DetailNodeMarkType markType,
+        Long refDirectoryNodeId,
+        Long refDetailNodeId,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -34,6 +36,8 @@ public record FetchDetailNodesResponse(
                 row.contentType(),
                 row.article(),
                 row.markType(),
+                row.refDirectoryNodeId(),
+                row.refDetailNodeId(),
                 row.createdAt().toInstant(ZoneOffset.UTC),
                 row.updatedAt().toInstant(ZoneOffset.UTC)
         );

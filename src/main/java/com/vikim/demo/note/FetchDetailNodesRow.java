@@ -16,6 +16,8 @@ public record FetchDetailNodesRow(
         DetailNodeContentType contentType,
         boolean article,
         DetailNodeMarkType markType,
+        Long refDirectoryNodeId,
+        Long refDetailNodeId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

@@ -379,4 +379,12 @@ public class NoteController {
 
         return bodyBuilder.body(ApiResponse.success(response, "获取文章成功"));
     }
+
+    @GetMapping("/directory/{id}")
+    public ApiResponse<GetDirectoryNodeByIdResponse> getDirectoryNodeById(
+            Authentication authentication,
+            @PathVariable("id") Long id
+    ) {
+        return ApiResponse.success(noteService.getDirectoryNodeById(getIdFromAuthentication(authentication), id), "获取笔记信息成功");
+    }
 }

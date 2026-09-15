@@ -31,11 +31,14 @@ public class DetailNodeTransactionService {
             if(addedNode.getContentType() == DetailNodeContentType.IMAGE) {
                 imageUrl = succeededImageNodes.get(addedNode.getUuid()).getUrl();
             }
-            CreateDetailNodeMapperParam param = new CreateDetailNodeMapperParam(directoryNodeId, addedNode.getLabel(), imageUrl, addedNode.getX(), addedNode.getY(), addedNode.getImageWidth(), addedNode.getImageHeight(), addedNode.getContentType(), addedNode.getMarkType());
+            CreateDetailNodeMapperParam param = new CreateDetailNodeMapperParam(directoryNodeId, addedNode.getLabel(), imageUrl, addedNode.getX(), addedNode.getY(), addedNode.getImageWidth(), addedNode.getImageHeight(), addedNode.getContentType(), addedNode.getMarkType(), addedNode.getRefDirectoryNodeId(), addedNode.getRefDetailNodeId());
             // 旧节点新增的子节点，parentId 是有值的
             if (addedNode.getParentId() != null) {
                 param.setParentId(addedNode.getParentId());
             }
+
+            // todo 后续改成批量校验（这种校验 怎么改？）
+            validateCreateParam(param);
 
             // 创建详情节点
             int affectedRows = detailNodeMapper.createDetailNode(param);
@@ -126,5 +129,22 @@ public class DetailNodeTransactionService {
         }
 
         return new BatchUpdateDetailNodesTransactionResult(new BatchUpdateDetailNodesResponse(uuidToId), deletedImageObjectKeys);
+    }
+
+    private void validateCreateParam(CreateDetailNodeMapperParam param){
+        switch (param.getContentType()) {
+            case REF_NOTE -> {
+                boolean res = detailNodeMapper.validateRefNodeForCreate(param.getContentType(), param.getRefDirectoryNodeId(), param.getDirectoryNodeId());
+                if(!res) {
+                    throw new BusinessException(ErrorCode.REF_NODE_VALIDATED_FAILED);
+                }
+            }
+            case REF_DETAIL, REF_ARTICLE -> {
+                boolean res = detailNodeMapper.validateRefNodeForCreate(param.getContentType(), param.getRefDetailNodeId(), param.getDirectoryNodeId());
+                if(!res) {
+                    throw new BusinessException(ErrorCode.REF_NODE_VALIDATED_FAILED);
+                }
+            }
+        }
     }
 }

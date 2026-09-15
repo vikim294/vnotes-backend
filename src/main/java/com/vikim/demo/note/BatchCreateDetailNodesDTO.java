@@ -39,4 +39,7 @@ public class BatchCreateDetailNodesDTO{
         private boolean article;
 
         private DetailNodeMarkType markType;
+
+        private Long refDirectoryNodeId;
+        private Long refDetailNodeId;
 }

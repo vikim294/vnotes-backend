@@ -65,6 +65,8 @@
             image_height,
             content_type,
             mark_type,
+            ref_directory_node_id,
+            ref_detail_node_id
         </trim>
 
         VALUES
@@ -80,8 +82,55 @@
             #{imageHeight},
             #{contentType},
             #{markType},
+            #{refDirectoryNodeId},
+            #{refDetailNodeId}
         </trim>
     </insert>
+
+    <select id="validateRefNodeForCreate" resultType="boolean">
+        select exists(
+            select 1
+            <if test="refType.name() == 'REF_NOTE'">
+                from directory_nodes
+                where id = #{refId}
+                    <!-- 禁止引用当前画布 -->
+                    and id != #{directoryNodeId}
+                    <!-- 引用目标必须是用户自己的节点 -->
+                    and user_id = (
+                        select user_id
+                        from directory_nodes
+                        where id = #{directoryNodeId}
+                    )
+                    and node_type = 'DETAIL'
+                    and deleted_at is null
+            </if>
+            <if test="refType.name() == 'REF_DETAIL'">
+                from detail_nodes de
+                join directory_nodes dir on dir.id = de.directory_node_id
+                where de.id = #{refId}
+                    and dir.user_id = (
+                        select user_id
+                        from directory_nodes
+                        where id = #{directoryNodeId}
+                    )
+                    and dir.node_type = 'DETAIL'
+                    and dir.deleted_at is null
+            </if>
+            <if test="refType.name() == 'REF_ARTICLE'">
+                from detail_nodes de
+                join directory_nodes dir on dir.id = de.directory_node_id
+                join articles ar on ar.detail_node_id = de.id
+                where de.id = #{refId}
+                    and dir.user_id = (
+                        select user_id
+                        from directory_nodes
+                        where id = #{directoryNodeId}
+                    )
+                    and dir.node_type = 'DETAIL'
+                    and dir.deleted_at is null
+            </if>
+        )
+    </select>
 
     <select id="getExportDetailNodesByDirectoryNodeIds" resultType="com.vikim.demo.note.ExportDetailNodeVO">
         select id as sourceId, parent_id as sourceParentId, directory_node_id as sourceDirectoryNodeId, label, x, y, image_width, image_height, content_type, mark_type, created_at, updated_at
