@@ -387,4 +387,12 @@ public class NoteController {
     ) {
         return ApiResponse.success(noteService.getDirectoryNodeById(getIdFromAuthentication(authentication), id), "获取笔记信息成功");
     }
+
+    @GetMapping("/detail/{id}")
+    public ApiResponse<GetDetailNodeLocationResponse> getDetailNodeLocation(
+            Authentication authentication,
+            @PathVariable("id") Long id
+    ) {
+        return ApiResponse.success(noteService.getDetailNodeLocation(getIdFromAuthentication(authentication), id), "获取详情节点信息成功");
+    }
 }

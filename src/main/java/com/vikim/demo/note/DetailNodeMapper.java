@@ -47,7 +47,18 @@ public interface DetailNodeMapper {
             left join articles ar on ar.detail_node_id = dn.id
             where dn.id = #{id} and dn.directory_node_id = #{directoryNodeId}
     """)
-    Optional<FetchDetailNodesRow> getDetailNodeById(@Param("id") Long id, @Param("directoryNodeId") Long directoryNodeId);
+    Optional<FetchDetailNodesRow> getDetailNodeByIdAndDirectoryNodeId(@Param("id") Long id, @Param("directoryNodeId") Long directoryNodeId);
+
+    @Select("""
+            select de.id, de.directory_node_id
+            from detail_nodes de
+            join directory_nodes dir on dir.id = de.directory_node_id
+            where de.id = #{id}
+                and dir.user_id = #{userId}
+                and dir.node_type = 'DETAIL'
+                and dir.deleted_at is null
+    """)
+    Optional<GetDetailNodeLocationResponse> getDetailNodeLocation(@Param("userId") Long userId, @Param("id") Long id);
 
     List<ExportDetailNodeVO> getExportDetailNodesByDirectoryNodeIds(@Param("directoryNodeIds") List<Long> directoryNodeIds);
 

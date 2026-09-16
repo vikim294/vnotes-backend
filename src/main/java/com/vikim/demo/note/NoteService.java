@@ -366,7 +366,7 @@ public class NoteService {
             // 校验：updated 的文本节点对应的 label 是否为空
             FetchDetailNodesRow existingNode =
                     detailNodeMapper
-                            .getDetailNodeById(
+                            .getDetailNodeByIdAndDirectoryNodeId(
                                     updatedNode.getId(),
                                     directoryNodeId
                             )
@@ -570,7 +570,7 @@ public class NoteService {
         for (BatchUpdateDetailNodesDTO updatedNode : request.updated()) {
             FetchDetailNodesRow existingNode =
                     detailNodeMapper
-                            .getDetailNodeById(
+                            .getDetailNodeByIdAndDirectoryNodeId(
                                     updatedNode.getId(),
                                     directoryNodeId
                             )
@@ -757,7 +757,7 @@ public class NoteService {
         }
 
         // 校验用户有该详情节点
-        FetchDetailNodesRow detailNodesRow = detailNodeMapper.getDetailNodeById(detailNodeId, oldDirectoryNodeId)
+        FetchDetailNodesRow detailNodesRow = detailNodeMapper.getDetailNodeByIdAndDirectoryNodeId(detailNodeId, oldDirectoryNodeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND));
 
         // 校验用户有该 destDirectoryNode
@@ -954,5 +954,9 @@ public class NoteService {
 
     public GetDirectoryNodeByIdResponse getDirectoryNodeById(Long userId, Long id){
         return directoryNodeMapper.getDirectoryNodeById(userId, id).orElseThrow(() -> new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND));
+    }
+
+    public GetDetailNodeLocationResponse getDetailNodeLocation(Long userId, Long id){
+        return detailNodeMapper.getDetailNodeLocation(userId, id).orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND));
     }
 }
