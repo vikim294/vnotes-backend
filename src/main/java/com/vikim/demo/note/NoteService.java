@@ -7,6 +7,7 @@ import com.vikim.demo.tag.SimpleTagResponse;
 import com.vikim.demo.tag.TagMapper;
 import com.vikim.demo.tag.TagResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class NoteService {
     private final DirectoryNodeMapper directoryNodeMapper;
@@ -60,7 +62,12 @@ public class NoteService {
             throw new BusinessException(ErrorCode.INVALID_TAGS);
         }
 
-        SearchDirectoryNodeMapperParam param = new SearchDirectoryNodeMapperParam(userId, keyword, pageSize, (page - 1) * pageSize, nodeType, tagIds, startTime, endTime);
+        String trimmedKeyword = keyword;
+        if(trimmedKeyword != null) {
+            trimmedKeyword = trimmedKeyword.strip();
+        }
+
+        SearchDirectoryNodeMapperParam param = new SearchDirectoryNodeMapperParam(userId, trimmedKeyword, pageSize, (page - 1) * pageSize, nodeType, tagIds, startTime, endTime);
 
         // 先找符合条件的 一页目录节点 id
         List<Long> ids = directoryNodeMapper.searchDirectoryNodes(param);
@@ -111,8 +118,21 @@ public class NoteService {
 
         int total = directoryNodeMapper.countDirectoryNodes(param);
 
+        // 创建搜索历史记录
+        createOrUpdateUserNoteSearchHistoryRecord(userId, trimmedKeyword);
+
         // 按分页查询结果 ids 的顺序返回响应
         return new PageResponse<>(ids.stream().map(responseMap::get).toList(), page, pageSize, total);
+    }
+
+    public void createOrUpdateUserNoteSearchHistoryRecord(Long userId, String trimmedKeyword) {
+        if(trimmedKeyword != null && !trimmedKeyword.isBlank()) {
+            try {
+                directoryNodeMapper.createOrUpdateUserNoteSearchHistoryRecord(userId, trimmedKeyword);
+            } catch (RuntimeException e) {
+                log.error("创建笔记搜索历史失败, userId={}, keyword={}", userId, trimmedKeyword, e);
+            }
+        }
     }
 
     public PageResponse<SearchDirectoryNodesInTrashBinResponse> searchDirectoryNodesInTrashBin(Long userId, String keyword, int pageSize, int page, NodeType nodeType, LocalDateTime startTime, LocalDateTime endTime) {
@@ -958,5 +978,9 @@ public class NoteService {
 
     public GetDetailNodeLocationResponse getDetailNodeLocation(Long userId, Long id){
         return detailNodeMapper.getDetailNodeLocation(userId, id).orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND));
+    }
+
+    public List<NoteSearchHistoryResponse> getUserNoteSearchHistory(Long userId){
+        return directoryNodeMapper.getUserNoteSearchHistory(userId);
     }
 }

@@ -64,6 +64,7 @@ public class NoteController {
             Authentication authentication,
 
             @RequestParam(value = "keyword", required = false)
+            @Size(max = 255, message = "关键词最多 255 字符")
             String keyword,
 
             @RequestParam(value = "pageSize", defaultValue = "10")
@@ -394,5 +395,12 @@ public class NoteController {
             @PathVariable("id") Long id
     ) {
         return ApiResponse.success(noteService.getDetailNodeLocation(getIdFromAuthentication(authentication), id), "获取详情节点信息成功");
+    }
+
+    @GetMapping("/search-history")
+    public ApiResponse<List<NoteSearchHistoryResponse>> getUserNoteSearchHistory(
+            Authentication authentication
+    ){
+        return ApiResponse.success(noteService.getUserNoteSearchHistory(getIdFromAuthentication(authentication)), "获取笔记搜索历史成功");
     }
 }

@@ -218,4 +218,20 @@ public interface DirectoryNodeMapper {
                 and deleted_at is null
             """)
     Optional<GetDirectoryNodeByIdResponse> getDirectoryNodeById(@Param("userId") Long userId, @Param("id") Long id);
+
+    @Insert("""
+            insert into note_search_history(user_id, keyword)
+            values(#{userId}, #{keyword})
+            on duplicate key update updated_at = current_timestamp(6)
+            """)
+    int createOrUpdateUserNoteSearchHistoryRecord(@Param("userId") Long userId, @Param("keyword") String keyword);
+
+    @Select("""
+            select id, keyword
+            from note_search_history
+            where user_id = #{userId}
+            order by updated_at desc, id desc
+            limit 7
+            """)
+    List<NoteSearchHistoryResponse> getUserNoteSearchHistory(@Param("userId") Long userId);
 }
