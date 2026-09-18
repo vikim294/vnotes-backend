@@ -31,13 +31,14 @@ public class CosService implements ObjectStorageService {
     @Override
     public String upload(
             MultipartFile file,
-            String objectKey
+            String objectKey,
+            String contentType
     ){
         // 使用 try-with-resources 保证输入流使用后关闭
         try (InputStream inputStream = file.getInputStream()) {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
-            metadata.setContentType(file.getContentType());
+            metadata.setContentType(contentType);
 
             cosClient.putObject(properties.bucket(), objectKey, inputStream, metadata);
 

@@ -252,6 +252,42 @@ public enum ErrorCode {
             "引用了将要被删除的详情节点"
     ),
 
+    CONTENT_TOO_LARGE(
+            40037,
+            HttpStatus.CONTENT_TOO_LARGE,
+            "文件大小超过限制"
+    ),
+
+    FILE_TOO_LARGE(
+            40038,
+            HttpStatus.CONTENT_TOO_LARGE,
+            "文件大小超过限制"
+    ),
+
+    FILES_TOTAL_SIZE_EXCEEDED(
+            40039,
+            HttpStatus.CONTENT_TOO_LARGE,
+            "文件总大小超过限制"
+    ),
+
+    INVALID_IMAGE(
+            40040,
+            HttpStatus.BAD_REQUEST,
+            "非法图片"
+    ),
+
+    IMAGE_DIMENSIONS_EXCEEDED(
+            40041,
+            HttpStatus.BAD_REQUEST,
+            "图片宽高超过限制"
+    ),
+
+    IMAGE_PIXELS_EXCEEDED(
+            40042,
+            HttpStatus.BAD_REQUEST,
+            "图片像素超过限制"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,

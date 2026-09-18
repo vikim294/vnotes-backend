@@ -659,26 +659,27 @@ public class NoteService {
         Map<UUID, UploadImageOfNodeVO> succeededImageNodes = new HashMap<>();
         List<String> filesToBeDeletedWhenError = new ArrayList<>();
 
+        // 校验文件总大小
+        fileService.validateFilesTotalSize(files, 50);
+
         try {
             // --- 先保存图片节点的图片文件
             for (BatchCreateDetailNodesDTO imageNode : imageNodes) {
                 MultipartFile file = files.get("file." + imageNode.getUuid());
-
-                if (file.isEmpty()) {
-                    throw new BusinessException(ErrorCode.FILE_IS_NOT_PRESENT);
-                }
+                // 校验图片文件
+                String ext = fileService.validateAndGetImageExtension(file, 5, 8192, 8192, 25_000_000L);
 
                 UploadImageOfNodeVO vo = new UploadImageOfNodeVO();
                 vo.setUuid(imageNode.getUuid());
 
                 // 生成随机文件名
                 String filename = UUID.randomUUID()
-                        + fileService.getImageExtensionByFileMimeType(file);
+                        + ext;
 
                 String objectKey = "imageNodes/" + userId + "/" + filename;
 
                 try {
-                    objectStorageService.upload(file, objectKey);
+                    objectStorageService.upload(file, objectKey, fileService.imageExtToMIME(ext));
                 } catch (BusinessException e) {
                     objectStorageService.deleteQuietly(objectKey);
 

@@ -2,6 +2,7 @@ package com.vikim.demo.note;
 
 import com.vikim.demo.common.BusinessException;
 import com.vikim.demo.common.ErrorCode;
+import com.vikim.demo.common.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,9 +20,12 @@ public class ImportService {
     private final NoteTransactionService noteTransactionService;
     private final DirectoryNodeMapper directoryNodeMapper;
     private final ArticleMapper articleMapper;
+    private final FileService fileService;
 
     @Transactional
     public void importJsonNotes(Long userId, ImportStrategy strategy, MultipartFile file) {
+        fileService.validateFileSize(file, 10);
+
         ImportJsonNotesDTO data = null;
 
         try {

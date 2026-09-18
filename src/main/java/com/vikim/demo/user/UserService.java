@@ -157,22 +157,20 @@ public class UserService {
     }
 
     public UploadAvatarResponse uploadAvatarToObjectStorage(Long userId, MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new BusinessException(ErrorCode.FILE_IS_NOT_PRESENT);
-        }
-
         // 查旧头像，如果存在，则上传新头像成功后要删除
         UserProfileResponse profileResponse = userMapper.getProfile(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        String ext = fileService.validateAndGetImageExtension(file, 2, 2048, 2048, 2_048L * 2_048);
+
         // 生成随机文件名
         String filename = UUID.randomUUID()
-                + fileService.getImageExtensionByFileMimeType(file);
+                + ext;
 
         // 文件 key
         String objectKey = "avatar/" + userId + "/" + filename;
 
         // 存
-        objectStorageService.upload(file, objectKey);
+        objectStorageService.upload(file, objectKey, fileService.imageExtToMIME(ext));
 
         try {
             int affectedRows =

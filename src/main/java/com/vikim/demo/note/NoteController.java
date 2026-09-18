@@ -28,7 +28,8 @@ public class NoteController {
     private final ExportService exportService;
     private final ImportService importService;
     private final ObjectMapper objectMapper;
-    @Value("${app.cookie.secure:false}") boolean cookieSecure;
+    @Value("${app.cookie.secure:false}")
+    boolean cookieSecure;
 
     public NoteController(NoteService noteService, ExportService exportService, ImportService importService, ObjectMapper objectMapper) {
         this.noteService = noteService;
@@ -264,7 +265,7 @@ public class NoteController {
 
         // 处理 cookie
         boolean newVisitor = isNewVisitor(visitorId);
-        if(newVisitor) {
+        if (newVisitor) {
             visitorId = UUID.randomUUID().toString();
         }
 
@@ -274,7 +275,7 @@ public class NoteController {
         ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
 
         // 设置响应头 set-cookie
-        if(newVisitor) {
+        if (newVisitor) {
             ResponseCookie cookie = ResponseCookie
                     .from("visitorId", visitorId)
                     .httpOnly(true)
@@ -324,15 +325,14 @@ public class NoteController {
         return ApiResponse.success("更新文章成功");
     }
 
-    private boolean isNewVisitor(String visitorId){
-        if(visitorId == null || visitorId.isBlank()) {
+    private boolean isNewVisitor(String visitorId) {
+        if (visitorId == null || visitorId.isBlank()) {
             return true;
-        }
-        else {
+        } else {
             try {
                 UUID.fromString(visitorId);
                 return false;
-            } catch (IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 return true;
             }
         }
@@ -355,7 +355,7 @@ public class NoteController {
 
         // 处理 cookie
         boolean newVisitor = isNewVisitor(visitorId);
-        if(newVisitor) {
+        if (newVisitor) {
             visitorId = UUID.randomUUID().toString();
         }
 
@@ -365,7 +365,7 @@ public class NoteController {
         ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
 
         // 设置响应头 set-cookie
-        if(newVisitor) {
+        if (newVisitor) {
             ResponseCookie cookie = ResponseCookie
                     .from("visitorId", visitorId)
                     .httpOnly(true)
@@ -400,7 +400,7 @@ public class NoteController {
     @GetMapping("/search-history")
     public ApiResponse<List<NoteSearchHistoryResponse>> getUserNoteSearchHistory(
             Authentication authentication
-    ){
+    ) {
         return ApiResponse.success(noteService.getUserNoteSearchHistory(getIdFromAuthentication(authentication)), "获取笔记搜索历史成功");
     }
 }

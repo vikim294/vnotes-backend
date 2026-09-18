@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -101,6 +102,17 @@ public class GlobalExceptionHandler {
         // 返回 400，响应体为 response
         return ResponseEntity.badRequest()
                 .body(ApiResponse.failure(errorCode.getCode(), message));
+    }
+
+    // Spring 会在进入 Controller 前 拒绝超过 multipart 限制的文件，抛出 MaxUploadSizeExceededException
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException exception
+    ) {
+        ErrorCode errorCode = ErrorCode.CONTENT_TOO_LARGE;
+
+        return ResponseEntity.status(errorCode.getHttpStatus())
+                .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage()));
     }
 
     // TODO @ExceptionHandler(Exception.class) 可能把 404、405、JSON 无法解析等客户端错误变成 500。

@@ -9,7 +9,8 @@ public interface ObjectStorageService {
 
     String upload(
             MultipartFile file,
-            String objectKey
+            String objectKey,
+            String contentType
     );
 
     void delete(String objectKey);
