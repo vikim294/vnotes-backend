@@ -83,10 +83,21 @@ public class SecurityConfig {
                 )
         );
 
+        // 允许前端发送的请求头
         configuration.setAllowedHeaders(
                 List.of(
                         "Authorization",
-                        "Content-Type"
+                        "Content-Type",
+                        "X-Request-Id",
+                        "X-Trace-Id"
+                )
+        );
+
+        // 允许浏览器前端读取响应中的排查 ID，然后就可以交给后端，让后端排查 bug
+        configuration.setExposedHeaders(
+                List.of(
+                        "X-Request-Id",
+                        "X-Trace-Id"
                 )
         );
 
