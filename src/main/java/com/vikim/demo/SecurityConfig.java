@@ -2,6 +2,7 @@ package com.vikim.demo;
 
 import com.vikim.demo.security.RestAccessDeniedHandler;
 import com.vikim.demo.security.RestAuthenticationEntryPoint;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,6 +18,8 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
+    @Value("${cors.allowed-origins}")
+    String corsAllowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -69,7 +72,7 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173", "https://vnotes.site", "https://www.vnotes.site")
+                List.of(corsAllowedOrigins.split(","))
         );
 
         configuration.setAllowedMethods(
