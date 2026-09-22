@@ -7,16 +7,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
     @Value("${cors.allowed-origins}")
     String corsAllowedOrigins;
@@ -25,7 +32,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             RestAuthenticationEntryPoint authenticationEntryPoint,
-            RestAccessDeniedHandler accessDeniedHandler
+            RestAccessDeniedHandler accessDeniedHandler,
+            JwtAuthenticationConverter converter
     ) throws Exception {
         http
                 .cors(Customizer.withDefaults())
@@ -44,7 +52,9 @@ public class SecurityConfig {
                                 "/auth/send-verification-code",
                                 "/auth/login/email-verification-code",
                                 "/user/register",
-                                "/oauth/token"
+                                "/oauth/token",
+                                // admin 的公开路由
+                                "/admin/auth/login"
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -54,13 +64,15 @@ public class SecurityConfig {
                                 "/note/shared/note/*",
                                 "/note/shared/article/*/*"
                         ).permitAll()
+                        // admin 的非公开路由，都要求 authentication 的 authorities 中有 TOKEN_TYPE_ADMIN
+                        .requestMatchers("/admin/**").hasAuthority("TOKEN_TYPE_ADMIN")
                         .anyRequest().authenticated()
                 )
 
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
-                        .jwt(Customizer.withDefaults())
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(converter))
                 );
 
         return http.build();
@@ -116,5 +128,35 @@ public class SecurityConfig {
         );
 
         return source;
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+
+            // tokenType
+            if ("ADMIN".equals(jwt.getClaimAsString("tokenType"))) {
+                authorities.add(new SimpleGrantedAuthority("TOKEN_TYPE_ADMIN"));
+            }
+
+            // roles -> ROLE_XXX
+            List<String> roles = jwt.getClaimAsStringList("roles");
+            if (roles != null) {
+                roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
+            }
+
+            // permissions
+            List<String> permissions = jwt.getClaimAsStringList("permissions");
+            if (permissions != null) {
+                permissions.forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission)));
+            }
+
+            return authorities;
+        });
+
+        return converter;
     }
 }

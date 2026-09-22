@@ -288,6 +288,24 @@ public enum ErrorCode {
             "图片像素超过限制"
     ),
 
+    ADMIN_ROLE_NOT_FOUND(
+            40043,
+            HttpStatus.NOT_FOUND,
+            "admin/角色未找到"
+    ),
+
+    ADMIN_USER_NOT_FOUND(
+            40044,
+            HttpStatus.NOT_FOUND,
+            "admin/用户未找到"
+    ),
+
+    ADMIN_INVALID_EMAIL_OR_PASSWORD(
+            40045,
+            HttpStatus.BAD_REQUEST,
+            "admin/非法邮箱或密码"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -460,6 +478,18 @@ public enum ErrorCode {
             50030,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "修改密码失败"
+    ),
+
+    ADMIN_USER_CREATED_FAILED(
+            50031,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "admin/用户创建失败"
+    ),
+
+    ADMIN_ASSIGN_ROLE_FAILED(
+            50032,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "admin/指定角色失败"
     ),
 
     ;
