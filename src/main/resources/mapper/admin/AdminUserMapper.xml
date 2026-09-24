@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.vikim.demo.admin.user.AdminUserMapper">
+
+    <update id="enableOrDisableUser">
+        update admin_users
+        set status = #{status}
+        where id = #{userId}
+            and status != #{status}
+    </update>
+
+    <insert id="assignRolesToUser">
+        insert into admin_user_roles (user_id, role_id, assigned_by)
+        values
+        <foreach collection="roleIds"
+                 item="roleId"
+                 separator=",">
+            (#{userId}, #{roleId}, #{assignedBy})
+        </foreach>
+    </insert>
+
+    <select id="existsBuiltInRoleWithinRoles" resultType="boolean">
+        select exists(
+            select 1
+            from admin_roles
+            where built_in = true
+                and id in
+                <foreach collection="roleIds"
+                         item="roleId"
+                         open="("
+                         separator=","
+                         close=")">
+                    #{roleId}
+                </foreach>
+        )
+    </select>
+
+</mapper>

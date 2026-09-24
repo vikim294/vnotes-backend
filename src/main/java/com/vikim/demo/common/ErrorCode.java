@@ -306,6 +306,24 @@ public enum ErrorCode {
             "admin/非法邮箱或密码"
     ),
 
+    ADMIN_OPERATION_DENIED(
+            40046,
+            HttpStatus.FORBIDDEN,
+            "admin/操作拒绝"
+    ),
+
+    ADMIN_ROLE_NAME_ALREADY_EXISTS(
+            40047,
+            HttpStatus.CONFLICT,
+            "admin/角色名已存在"
+    ),
+
+    ADMIN_USER_ALREADY_EXISTS(
+            40048,
+            HttpStatus.CONFLICT,
+            "admin/用户已存在"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -490,6 +508,30 @@ public enum ErrorCode {
             50032,
             HttpStatus.INTERNAL_SERVER_ERROR,
             "admin/指定角色失败"
+    ),
+
+    ADMIN_CREATE_AUDIT_LOG_FAILED(
+            50033,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "admin/创建审计日志失败"
+    ),
+
+    ADMIN_ASSIGN_PERMISSION_FAILED(
+            50034,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "admin/指定权限失败"
+    ),
+
+    ADMIN_CREATE_ROLE_FAILED(
+            50035,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "admin/创建角色失败"
+    ),
+
+    ADMIN_UPDATE_ROLE_FAILED(
+            50036,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "admin/更新角色失败"
     ),
 
     ;

@@ -20,4 +20,10 @@ public interface AdminPermissionMapper {
                 and u.status = 'ACTIVE'
             """)
     List<String> getUserAllPermissionCodes(Long userId);
+
+    @Select("""
+            select *
+            from admin_permissions
+            """)
+    List<GetPermissionRow> getAllPermissions();
 }
