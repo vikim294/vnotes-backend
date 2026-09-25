@@ -12,9 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +35,49 @@ public class AdminRoleService {
                 ))
                 .toList();
     }
+
+    @PreAuthorize("hasAuthority('admin:role:read')")
+    public List<GetRoleWithPermissionResponse> getAllRolesWithPermissions() {
+        List<GetRoleWithPermissionRow> rows = adminRoleMapper.getAllRolesWithPermissions();
+
+        Map<Long, GetRoleWithPermissionResponse> listResponseMap = new LinkedHashMap<>();
+
+        for (GetRoleWithPermissionRow row : rows) {
+            GetRoleWithPermissionResponse item = listResponseMap.get(row.id());
+
+            RolePermission permission = new RolePermission(
+                    row.permissionId(),
+                    row.permissionCode(),
+                    row.permissionName()
+            );
+
+            if (item == null) {
+                List<RolePermission> permissions = new ArrayList<>();
+
+                if (row.permissionId() != null) {
+                    permissions.add(permission);
+                }
+
+                listResponseMap.put(row.id(), new GetRoleWithPermissionResponse(
+                        row.id(),
+                        row.code(),
+                        row.name(),
+                        row.description(),
+                        row.builtIn(),
+                        permissions,
+                        row.createdAt().toInstant(ZoneOffset.UTC),
+                        row.updatedAt().toInstant(ZoneOffset.UTC)
+                ));
+            } else {
+                if (row.permissionId() != null) {
+                    item.permissions().add(permission);
+                }
+            }
+        }
+
+        return listResponseMap.values().stream().toList();
+    }
+
 
     @PreAuthorize("hasAuthority('admin:role:assign_permission')")
     @Transactional
@@ -163,7 +204,7 @@ public class AdminRoleService {
             return;
         }
 
-        // 更新成功 -> 1
+        // 匹配到记录了 -> 1（可能实际更新了，也可能没实际更新，总之更新成功了）
         // 影响 0 行 -> SQL 执行成功，但没有记录被匹配或修改（查询完成后、执行更新前，角色被另一个请求删除了）
         // 出现数据库重复键异常 -> 角色名已存在
         // 出现其他数据库异常 -> 全局异常处理

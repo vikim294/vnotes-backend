@@ -21,6 +21,11 @@ public class AdminUserController {
         return ApiResponse.success(adminUserService.getUserList(), "获取用户列表成功");
     }
 
+    @GetMapping("/list-with-roles")
+    public ApiResponse<List<GetUserWithRolesListResponse>> getUserWithRolesList(){
+        return ApiResponse.success(adminUserService.getUserWithRolesList(), "获取用户列表成功");
+    }
+
     @PostMapping("/add")
     public ApiResponse<Void> addUser(
             Authentication authentication,

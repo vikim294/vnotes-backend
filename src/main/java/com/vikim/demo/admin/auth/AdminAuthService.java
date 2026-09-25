@@ -26,7 +26,7 @@ public class AdminAuthService {
     private final JwtService jwtService;
 
     public AdminLoginResponse login(LoginRequest request) {
-        GetUserResponse user = adminUserMapper.getUserByEmail(request.email()).orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_INVALID_EMAIL_OR_PASSWORD));
+        GetUserResponse user = adminUserMapper.getActiveUserByEmail(request.email()).orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_INVALID_EMAIL_OR_PASSWORD));
 
         // 校验密码
         if (!passwordEncoder.matches(request.password(), user.passwordHash())) {

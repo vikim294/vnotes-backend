@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneOffset;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +35,46 @@ public class AdminUserService {
                         row.updatedAt().toInstant(ZoneOffset.UTC)
                 ))
                 .toList();
+    }
+
+    @PreAuthorize("hasAuthority('admin:user:read')")
+    public List<GetUserWithRolesListResponse> getUserWithRolesList() {
+        List<GetUserWithRolesListRow> rows = adminUserMapper.getUserWithRolesList();
+
+        Map<Long, GetUserWithRolesListResponse> listResponseMap = new LinkedHashMap<>();
+
+        for (GetUserWithRolesListRow row : rows) {
+            GetUserWithRolesListResponse item = listResponseMap.get(row.id());
+
+            UserRole role = new UserRole(
+                    row.roleId(),
+                    row.roleName(),
+                    row.roleBuiltIn()
+            );
+
+            if (item == null) {
+                List<UserRole> roles = new ArrayList<>();
+
+                if (row.roleId() != null) {
+                    roles.add(role);
+                }
+
+                listResponseMap.put(row.id(), new GetUserWithRolesListResponse(
+                        row.id(),
+                        row.email(),
+                        row.status(),
+                        roles,
+                        row.createdAt().toInstant(ZoneOffset.UTC),
+                        row.updatedAt().toInstant(ZoneOffset.UTC)
+                ));
+            } else {
+                if (row.roleId() != null) {
+                    item.roles().add(role);
+                }
+            }
+        }
+
+        return listResponseMap.values().stream().toList();
     }
 
     @PreAuthorize("hasAuthority('admin:user:add')")
@@ -67,17 +107,17 @@ public class AdminUserService {
             EnableOrDisableUserRequest request
     ) {
         // 判断目标用户是否存在
-        if(!adminUserMapper.existsById(request.userId())) {
+        if (!adminUserMapper.existsById(request.userId())) {
             throw new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND);
         }
 
         // 禁止操作拥有系统内置角色的用户
-        if(adminUserMapper.hasBuiltInRole(request.userId())) {
+        if (adminUserMapper.hasBuiltInRole(request.userId())) {
             throw new BusinessException(ErrorCode.ADMIN_OPERATION_DENIED);
         }
 
         // 不能启用和禁用自己
-        if(operatorUserId.equals(request.userId())) {
+        if (operatorUserId.equals(request.userId())) {
             throw new BusinessException(
                     ErrorCode.ADMIN_OPERATION_DENIED
             );
@@ -89,10 +129,9 @@ public class AdminUserService {
                     request.status() == UserStatus.ACTIVE ? AdminAuditAction.ENABLE_USER : AdminAuditAction.DISABLE_USER,
                     (request.status() == UserStatus.ACTIVE ? "启用" : "禁用") + "用户：" + request.userId()
             );
-        }
-        else {
+        } else {
             // 第一次查询之后，目标用户可能被其他并发请求删除
-            if(!adminUserMapper.existsById(request.userId())) {
+            if (!adminUserMapper.existsById(request.userId())) {
                 throw new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND);
             }
 
@@ -107,17 +146,17 @@ public class AdminUserService {
             AssignRolesToUserRequest request
     ) {
         // 判断目标用户是否存在
-        if(!adminUserMapper.existsById(request.userId())) {
+        if (!adminUserMapper.existsById(request.userId())) {
             throw new BusinessException(ErrorCode.ADMIN_USER_NOT_FOUND);
         }
 
         // 禁止操作拥有系统内置角色的用户
-        if(adminUserMapper.hasBuiltInRole(request.userId())) {
+        if (adminUserMapper.hasBuiltInRole(request.userId())) {
             throw new BusinessException(ErrorCode.ADMIN_OPERATION_DENIED);
         }
 
         // 禁止分配系统角色给用户
-        if(!request.roleIds().isEmpty() && adminUserMapper.existsBuiltInRoleWithinRoles(request.roleIds())) {
+        if (!request.roleIds().isEmpty() && adminUserMapper.existsBuiltInRoleWithinRoles(request.roleIds())) {
             throw new BusinessException(ErrorCode.ADMIN_OPERATION_DENIED);
         }
 

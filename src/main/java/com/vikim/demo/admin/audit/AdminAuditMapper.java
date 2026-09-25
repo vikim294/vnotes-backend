@@ -17,6 +17,7 @@ public interface AdminAuditMapper {
     @Select("""
             select id, user_id, action, description, created_at
             from admin_audit_logs
+            order by created_at desc, id desc
             """)
     List<GetAuditLogRow> getAuditLogs();
 }

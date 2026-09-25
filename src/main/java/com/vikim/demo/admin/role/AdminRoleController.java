@@ -21,6 +21,12 @@ public class AdminRoleController {
         return ApiResponse.success(adminRoleService.getAllRoles(), "获取所有角色成功");
     }
 
+
+    @GetMapping("/list-with-permissions")
+    public ApiResponse<List<GetRoleWithPermissionResponse>> getAllRolesWithPermissions(){
+        return ApiResponse.success(adminRoleService.getAllRolesWithPermissions(), "获取所有角色成功");
+    }
+
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteRoleById(
             Authentication authentication,

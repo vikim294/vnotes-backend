@@ -59,7 +59,7 @@ public interface AdminUserMapper {
             where email = #{email}
                 and status = 'ACTIVE'
             """)
-    Optional<GetUserResponse> getUserByEmail(String email);
+    Optional<GetUserResponse> getActiveUserByEmail(String email);
 
     @Select("""
             select exists(
@@ -76,6 +76,24 @@ public interface AdminUserMapper {
             from admin_users
             """)
     List<GetUserListRow> getUserList();
+
+    // 暂不分页
+    @Select("""
+            select
+                u.id,
+                u.email,
+                u.status,
+                r.id as role_id,
+                r.name as role_name,
+                r.built_in as role_built_in,
+                u.created_at,
+                u.updated_at
+            from admin_users u
+            left join admin_user_roles ur on ur.user_id = u.id
+            left join admin_roles r on r.id = ur.role_id
+            order by u.created_at desc, u.id desc
+            """)
+    List<GetUserWithRolesListRow> getUserWithRolesList();
 
     int enableOrDisableUser(@Param("userId") Long userId, @Param("status") UserStatus status);
 }

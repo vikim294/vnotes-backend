@@ -59,6 +59,25 @@ public interface AdminRoleMapper {
             """)
     List<GetRoleRow> getAllRoles();
 
+    @Select("""
+            select
+                r.id,
+                r.code,
+                r.name,
+                r.description,
+                r.built_in,
+                p.id as permission_id,
+                p.code as permission_code,
+                p.name as permission_name,
+                r.created_at,
+                r.updated_at
+            from admin_roles r
+            left join admin_role_permissions rp on rp.role_id = r.id
+            left join admin_permissions p on p.id = rp.permission_id
+            order by r.created_at desc, r.id desc
+            """)
+    List<GetRoleWithPermissionRow> getAllRolesWithPermissions();
+
     // 给角色指定权限
     int assignPermissionsToRole(@Param("roleId") Long roleId, @Param("permissionIds") Set<Long> permissionIds);
 

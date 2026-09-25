@@ -24,6 +24,7 @@ public interface AdminPermissionMapper {
     @Select("""
             select *
             from admin_permissions
+            order by created_at desc, id desc
             """)
     List<GetPermissionRow> getAllPermissions();
 }
