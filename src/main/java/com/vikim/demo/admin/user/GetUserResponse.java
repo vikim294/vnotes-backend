@@ -4,6 +4,6 @@ public record GetUserResponse(
         Long id,
         String email,
         String passwordHash,
-        UserStatus status
+        AdminUserStatus status
 ) {
 }

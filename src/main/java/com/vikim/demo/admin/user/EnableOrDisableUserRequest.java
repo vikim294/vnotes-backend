@@ -7,6 +7,6 @@ public record EnableOrDisableUserRequest(
         Long userId,
 
         @NotNull(message = "status 不能为空")
-        UserStatus status
+        AdminUserStatus status
 ) {
 }

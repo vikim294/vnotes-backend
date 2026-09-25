@@ -29,6 +29,10 @@ public class AuthService {
         return authMapper.findUserByEmail(email);
     }
 
+    public boolean isActiveUser(Long userId) {
+        return authMapper.isActiveUser(userId);
+    }
+
     public LoginResponse loginByEmailAndPassword(LoginByEmailAndPasswordRequest request) {
         User user = findUserByEmail(request.email()).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 

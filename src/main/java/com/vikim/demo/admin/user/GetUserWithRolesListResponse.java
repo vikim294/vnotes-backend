@@ -6,7 +6,7 @@ import java.util.List;
 public record GetUserWithRolesListResponse(
         Long id,
         String email,
-        UserStatus status,
+        AdminUserStatus status,
         List<UserRole> roles,
         Instant createdAt,
         Instant updatedAt

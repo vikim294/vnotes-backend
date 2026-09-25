@@ -5,7 +5,7 @@ import java.time.Instant;
 public record GetUserListResponse(
         Long id,
         String email,
-        UserStatus status,
+        AdminUserStatus status,
         Instant createdAt,
         Instant updatedAt
 ) {

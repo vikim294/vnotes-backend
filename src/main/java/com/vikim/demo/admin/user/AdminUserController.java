@@ -41,7 +41,7 @@ public class AdminUserController {
             @Valid @RequestBody EnableOrDisableUserRequest request
     ){
         adminUserService.enableOrDisableUser(GetUserIdFromAuthentication.getIdFromAuthentication(authentication), request);
-        return ApiResponse.success(request.status() == UserStatus.ACTIVE ? "启用用户成功" : "禁用用户成功");
+        return ApiResponse.success(request.status() == AdminUserStatus.ACTIVE ? "启用用户成功" : "禁用用户成功");
     }
 
     @PostMapping("/assign-roles")

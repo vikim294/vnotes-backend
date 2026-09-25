@@ -95,5 +95,5 @@ public interface AdminUserMapper {
             """)
     List<GetUserWithRolesListRow> getUserWithRolesList();
 
-    int enableOrDisableUser(@Param("userId") Long userId, @Param("status") UserStatus status);
+    int enableOrDisableUser(@Param("userId") Long userId, @Param("status") AdminUserStatus status);
 }

@@ -13,6 +13,17 @@ public interface AuthMapper {
         select id, username, email, password_hash
         from users u
         where u.email = #{email}
+            and u.status = 'ACTIVE'
     """)
     Optional<User> findUserByEmail(String email);
+
+    @Select("""
+            select exists(
+                select 1
+                from users
+                where id = #{userId}
+                    and status = 'ACTIVE'
+            )
+            """)
+    boolean isActiveUser(Long userId);
 }

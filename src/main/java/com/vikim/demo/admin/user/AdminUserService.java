@@ -83,7 +83,7 @@ public class AdminUserService {
         CreateAdminUserMapperParam user = new CreateAdminUserMapperParam();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(DEFAULT_PASSWORD));
-        user.setStatus(UserStatus.ACTIVE);
+        user.setStatus(AdminUserStatus.ACTIVE);
 
         try {
             if (adminUserMapper.createUser(user) != 1) {
@@ -126,8 +126,8 @@ public class AdminUserService {
         if (adminUserMapper.enableOrDisableUser(request.userId(), request.status()) == 1) {
             adminAuditService.createAuditLog(
                     operatorUserId,
-                    request.status() == UserStatus.ACTIVE ? AdminAuditAction.ENABLE_USER : AdminAuditAction.DISABLE_USER,
-                    (request.status() == UserStatus.ACTIVE ? "启用" : "禁用") + "用户：" + request.userId()
+                    request.status() == AdminUserStatus.ACTIVE ? AdminAuditAction.ENABLE_USER : AdminAuditAction.DISABLE_USER,
+                    (request.status() == AdminUserStatus.ACTIVE ? "启用" : "禁用") + "用户：" + request.userId()
             );
         } else {
             // 第一次查询之后，目标用户可能被其他并发请求删除

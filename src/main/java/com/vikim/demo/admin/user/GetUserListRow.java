@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public record GetUserListRow(
         Long id,
         String email,
-        UserStatus status,
+        AdminUserStatus status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

@@ -1,4 +1,4 @@
-package com.vikim.demo.admin.user;
+package com.vikim.demo.user;
 
 public enum UserStatus {
     ACTIVE,

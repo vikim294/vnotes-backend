@@ -324,6 +324,12 @@ public enum ErrorCode {
             "admin/用户已存在"
     ),
 
+    USER_IS_DISABLED(
+            40049,
+            HttpStatus.FORBIDDEN,
+            "用户已被封禁"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,

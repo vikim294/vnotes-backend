@@ -12,5 +12,5 @@ public class CreateAdminUserMapperParam {
 
         private String passwordHash;
 
-        private UserStatus status;
+        private AdminUserStatus status;
 }

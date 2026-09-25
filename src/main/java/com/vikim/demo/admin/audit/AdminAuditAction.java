@@ -9,4 +9,6 @@ public enum AdminAuditAction {
     UPDATE_ROLE,
     DELETE_ROLE,
     ASSIGN_PERMISSION,
+    ENABLE_CLIENT_USER,
+    DISABLE_CLIENT_USER,
 }

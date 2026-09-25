@@ -34,7 +34,7 @@ public class InitSuperAdminService {
         CreateAdminUserMapperParam user = new CreateAdminUserMapperParam();
         user.setEmail(properties.email());
         user.setPasswordHash(passwordEncoder.encode(properties.password()));
-        user.setStatus(UserStatus.ACTIVE);
+        user.setStatus(AdminUserStatus.ACTIVE);
 
         // 创建用户
         if (adminUserMapper.createUser(user) != 1 || user.getId() == null) {

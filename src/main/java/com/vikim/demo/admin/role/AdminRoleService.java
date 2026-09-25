@@ -174,7 +174,6 @@ public class AdminRoleService {
     @PreAuthorize("hasAuthority('admin:role:edit')")
     @Transactional
     // todo 仍然存在并发更新导致更新丢失问题，之后引入乐观锁
-    // todo 验证一下 update 的影响行到底是匹配行数还是实际改变行数
     public void updateRole(Long userId, UpdateRoleRequest request) {
         // 先判断角色存在性
         GetRoleRow role = adminRoleMapper.getRoleById(request.id()).orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_ROLE_NOT_FOUND));
