@@ -20,4 +20,18 @@ public interface AdminAuditMapper {
             order by created_at desc, id desc
             """)
     List<GetAuditLogRow> getAuditLogs();
+
+    @Select("""
+            select
+                log.id,
+                log.user_id,
+                u.email,
+                log.action,
+                log.description,
+                log.created_at
+            from admin_audit_logs log
+            left join admin_users u on u.id = log.user_id
+            order by log.created_at desc, log.id desc
+            """)
+    List<GetAuditLogForExportRow> getAuditLogsForExport();
 }

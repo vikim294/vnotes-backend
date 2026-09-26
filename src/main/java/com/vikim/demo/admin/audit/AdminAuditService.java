@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneOffset;
 import java.util.List;
@@ -37,5 +38,22 @@ public class AdminAuditService {
                         row.createdAt().toInstant(ZoneOffset.UTC)
                 ))
                 .toList();
+    }
+
+    @PreAuthorize("hasAuthority('admin:audit:export_excel')")
+    @Transactional
+    public byte[] exportAuditLogsToExcel(
+            Long operatorId
+    ){
+        List<GetAuditLogForExportRow> rows = adminAuditMapper.getAuditLogsForExport();
+
+        // 记录审计日志
+        createAuditLog(
+                operatorId,
+                AdminAuditAction.EXPORT_AUDIT_LOGS_TO_EXCEL,
+                "导出审计日志 Excel"
+        );
+
+        return AuditLogExcelExporter.transferDataToBytes(rows);
     }
 }

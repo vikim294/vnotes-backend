@@ -112,7 +112,8 @@ public class SecurityConfig {
         configuration.setExposedHeaders(
                 List.of(
                         "X-Request-Id",
-                        "X-Trace-Id"
+                        "X-Trace-Id",
+                        "Content-Disposition"
                 )
         );
 
