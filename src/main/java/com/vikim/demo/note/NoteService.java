@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -37,6 +38,7 @@ public class NoteService {
     private final TagMapper tagMapper;
     private final NoteShareAccessLogAsyncService noteShareAccessLogAsyncService;
     private final ArticleMapper articleMapper;
+    private final ObjectMapper objectMapper;
 
     public Long createDirectoryNode(Long userId, CreateDirectoryNodeRequest request) {
         if (request.parentId() != null && !directoryNodeMapper.hasDirectoryNode(userId, request.parentId(), NodeType.DIRECTORY)) {
@@ -63,7 +65,7 @@ public class NoteService {
         }
 
         String trimmedKeyword = keyword;
-        if(trimmedKeyword != null) {
+        if (trimmedKeyword != null) {
             trimmedKeyword = trimmedKeyword.strip();
         }
 
@@ -126,7 +128,7 @@ public class NoteService {
     }
 
     public void createOrUpdateUserNoteSearchHistoryRecord(Long userId, String trimmedKeyword) {
-        if(trimmedKeyword != null && !trimmedKeyword.isBlank()) {
+        if (trimmedKeyword != null && !trimmedKeyword.isBlank()) {
             try {
                 directoryNodeMapper.createOrUpdateUserNoteSearchHistoryRecord(userId, trimmedKeyword);
             } catch (RuntimeException e) {
@@ -529,59 +531,59 @@ public class NoteService {
                 }
 
                 // 校验节点 contentType 和 ref_directory_node_id, ref_detail_node_id
-                if(addedNode.getRefDirectoryNodeId() != null || addedNode.getRefDetailNodeId() != null) {
+                if (addedNode.getRefDirectoryNodeId() != null || addedNode.getRefDetailNodeId() != null) {
                     throw new BusinessException(ErrorCode.INVALID_REF_ON_TEXT_NODE);
                 }
             }
 
             // 图片节点
-            if(addedNode.getContentType() == DetailNodeContentType.IMAGE) {
-                if(addedNode.getRefDirectoryNodeId() != null || addedNode.getRefDetailNodeId() != null) {
+            if (addedNode.getContentType() == DetailNodeContentType.IMAGE) {
+                if (addedNode.getRefDirectoryNodeId() != null || addedNode.getRefDetailNodeId() != null) {
                     throw new BusinessException(ErrorCode.INVALID_REF_ON_IMAGE_NODE);
                 }
             }
 
             // 引用节点：笔记节点
-            if(addedNode.getContentType() == DetailNodeContentType.REF_NOTE) {
+            if (addedNode.getContentType() == DetailNodeContentType.REF_NOTE) {
                 if (addedNode.getLabel() == null || addedNode.getLabel().trim().isBlank()) {
                     throw new BusinessException(ErrorCode.REF_NODE_LABEL_IS_NULL);
                 }
 
-                if(addedNode.getRefDirectoryNodeId() == null) {
+                if (addedNode.getRefDirectoryNodeId() == null) {
                     throw new BusinessException(ErrorCode.REF_NODE_MISSING_VALUE);
                 }
 
-                if(addedNode.getRefDetailNodeId() != null) {
+                if (addedNode.getRefDetailNodeId() != null) {
                     throw new BusinessException(ErrorCode.NODE_REF_MUST_BE_ONLY_ONE);
                 }
 
                 // 引用节点 isArticle 必须为 false
-                if(addedNode.isArticle()) {
+                if (addedNode.isArticle()) {
                     throw new BusinessException(ErrorCode.REF_NODE_SHOULD_NOT_HAVE_ARTICLE);
                 }
             }
 
             // 引用节点：详情节点 or 文章节点
-            if(addedNode.getContentType() == DetailNodeContentType.REF_DETAIL || addedNode.getContentType() == DetailNodeContentType.REF_ARTICLE) {
+            if (addedNode.getContentType() == DetailNodeContentType.REF_DETAIL || addedNode.getContentType() == DetailNodeContentType.REF_ARTICLE) {
                 if (addedNode.getLabel() == null || addedNode.getLabel().trim().isBlank()) {
                     throw new BusinessException(ErrorCode.REF_NODE_LABEL_IS_NULL);
                 }
 
-                if(addedNode.getRefDetailNodeId() == null) {
+                if (addedNode.getRefDetailNodeId() == null) {
                     throw new BusinessException(ErrorCode.REF_NODE_MISSING_VALUE);
                 }
 
-                if(addedNode.getRefDirectoryNodeId() != null) {
+                if (addedNode.getRefDirectoryNodeId() != null) {
                     throw new BusinessException(ErrorCode.NODE_REF_MUST_BE_ONLY_ONE);
                 }
 
                 // 引用节点 isArticle 必须为 false
-                if(addedNode.isArticle()) {
+                if (addedNode.isArticle()) {
                     throw new BusinessException(ErrorCode.REF_NODE_SHOULD_NOT_HAVE_ARTICLE);
                 }
 
                 // 新增的引用节点 不能引用 将被删除的节点
-                if(deletedIdsToBeVerified.contains(addedNode.getRefDetailNodeId())) {
+                if (deletedIdsToBeVerified.contains(addedNode.getRefDetailNodeId())) {
                     throw new BusinessException(ErrorCode.NODE_REF_IS_TO_BE_DELETED);
                 }
             }
@@ -931,33 +933,68 @@ public class NoteService {
         return NoteShareResponse.from(noteShareRow);
     }
 
-    public List<NoteShareAccessLogResponse> fetchNoteShareAccessLogsByNoteShareId(Long userId, Long noteShareId) {
+    public FetchNoteShareAccessLogsByNoteShareIdResponse fetchNoteShareAccessLogsByNoteShareId(Long userId, Long noteShareId, String cursor) {
         // 校验
         if (!directoryNodeMapper.hasUserSharedNote(userId, noteShareId)) {
             throw new BusinessException(ErrorCode.NOTE_SHARE_NOT_FOUND);
         }
 
-        // 尝试找分享记录
-        List<NoteShareAccessLogRow> rows = directoryNodeMapper.fetchNoteShareAccessLogsByNoteShareId(noteShareId);
+        NoteShareAccessLogCursorPagination cursorPagination = new NoteShareAccessLogCursorPagination(null, null);
 
-        return rows.stream()
-                .map(NoteShareAccessLogResponse::from)
-                .toList();
+        // 解析 cursor
+        if (cursor != null) {
+            try {
+                byte[] json = Base64.getUrlDecoder().decode(cursor);
+                cursorPagination = objectMapper.readValue(json, NoteShareAccessLogCursorPagination.class);
+
+                if (cursorPagination.getCreatedAt() == null || cursorPagination.getId() == null) {
+                    throw new BusinessException(ErrorCode.INVALID_CURSOR);
+                }
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.INVALID_CURSOR);
+            }
+        }
+
+        int limit = 5;
+
+        // 尝试找分享记录
+        List<NoteShareAccessLogRow> rows = directoryNodeMapper.fetchNoteShareAccessLogsByNoteShareId(noteShareId, cursorPagination.getCreatedAt(), cursorPagination.getId(), limit + 1);
+
+        boolean hasMore = rows.size() > limit;
+        List<NoteShareAccessLogRow> list = hasMore ? rows.subList(0, limit) : rows;
+
+        String nextCursorPagination = null;
+
+        if(hasMore) {
+            byte[] json = objectMapper.writeValueAsBytes(new NoteShareAccessLogCursorPagination(
+                    list.getLast().createdAt(),
+                    list.getLast().id()
+            ));
+            nextCursorPagination = Base64.getUrlEncoder().withoutPadding().encodeToString(json);
+        }
+
+        return new FetchNoteShareAccessLogsByNoteShareIdResponse(
+                list.stream()
+                        .map(NoteShareAccessLogResponse::from)
+                        .toList(),
+                hasMore,
+                hasMore ? nextCursorPagination : null
+        );
     }
 
     public FetchArticleResponse getArticleByDetailNodeId(Long userId, Long detailNodeId) {
-        return FetchArticleResponse.from(articleMapper.getArticleByUserIdAndDetailNodeId(userId, detailNodeId).orElseThrow(()->new BusinessException(ErrorCode.ARTICLE_NOT_FOUND)));
+        return FetchArticleResponse.from(articleMapper.getArticleByUserIdAndDetailNodeId(userId, detailNodeId).orElseThrow(() -> new BusinessException(ErrorCode.ARTICLE_NOT_FOUND)));
     }
 
     public void updateArticleByDetailNodeId(Long userId, Long detailNodeId, String content) {
-        if(articleMapper.updateArticleByDetailNodeId(userId, detailNodeId, content) != 1) {
+        if (articleMapper.updateArticleByDetailNodeId(userId, detailNodeId, content) != 1) {
             throw new BusinessException(ErrorCode.ARTICLE_NOT_FOUND);
         }
     }
 
-    public FetchArticleResponse getArticleByDetailNodeIdAndShareToken(Long userId, Long detailNodeId, String shareToken, String visitorId){
+    public FetchArticleResponse getArticleByDetailNodeIdAndShareToken(Long userId, Long detailNodeId, String shareToken, String visitorId) {
         // 查 article
-        GetNoteShareArticleRow row = articleMapper.getNoteShareArticle(detailNodeId, shareToken).orElseThrow(()->new BusinessException(ErrorCode.ARTICLE_NOT_FOUND));
+        GetNoteShareArticleRow row = articleMapper.getNoteShareArticle(detailNodeId, shareToken).orElseThrow(() -> new BusinessException(ErrorCode.ARTICLE_NOT_FOUND));
 
         // owner 不产生访问记录
         if (userId == null || !directoryNodeMapper.hasDirectoryNode(userId, row.directoryNodeId(), NodeType.DETAIL)) {
@@ -973,15 +1010,15 @@ public class NoteService {
         );
     }
 
-    public GetDirectoryNodeByIdResponse getDirectoryNodeById(Long userId, Long id){
+    public GetDirectoryNodeByIdResponse getDirectoryNodeById(Long userId, Long id) {
         return directoryNodeMapper.getDirectoryNodeById(userId, id).orElseThrow(() -> new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND));
     }
 
-    public GetDetailNodeLocationResponse getDetailNodeLocation(Long userId, Long id){
+    public GetDetailNodeLocationResponse getDetailNodeLocation(Long userId, Long id) {
         return detailNodeMapper.getDetailNodeLocation(userId, id).orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NODE_NOT_FOUND));
     }
 
-    public List<NoteSearchHistoryResponse> getUserNoteSearchHistory(Long userId){
+    public List<NoteSearchHistoryResponse> getUserNoteSearchHistory(Long userId) {
         return directoryNodeMapper.getUserNoteSearchHistory(userId);
     }
 }

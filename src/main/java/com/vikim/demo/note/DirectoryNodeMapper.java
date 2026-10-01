@@ -2,6 +2,7 @@ package com.vikim.demo.note;
 
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -193,8 +194,8 @@ public interface DirectoryNodeMapper {
             """)
     int createNoteShareAccessLog(@Param("noteShareId") Long noteShareId, @Param("target") NoteShareTarget target, @Param("targetId") Long targetId, @Param("visitorId") String visitorId);
 
-    // 获取访问记录
-    List<NoteShareAccessLogRow> fetchNoteShareAccessLogsByNoteShareId(@Param("noteShareId") Long noteShareId);
+    // 获取访问记录（cursor 分页）
+    List<NoteShareAccessLogRow> fetchNoteShareAccessLogsByNoteShareId(@Param("noteShareId") Long noteShareId, @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt, @Param("cursorId") Long cursorId, @Param("limit") int limit);
 
     // 校验用户有该 note share 记录
     @Select("""

@@ -300,11 +300,13 @@ public class NoteController {
     }
 
     @GetMapping("/share/access-logs/{id}")
-    public ApiResponse<List<NoteShareAccessLogResponse>> fetchNoteShareAccessLogsByNoteShareId(
+    public ApiResponse<FetchNoteShareAccessLogsByNoteShareIdResponse> fetchNoteShareAccessLogsByNoteShareId(
             Authentication authentication,
-            @PathVariable("id") Long noteShareId
+            @PathVariable("id") Long noteShareId,
+            @RequestParam(value = "cursor", required = false)
+            String cursor
     ) {
-        return ApiResponse.success(noteService.fetchNoteShareAccessLogsByNoteShareId(getIdFromAuthentication(authentication), noteShareId), "获取分享访问记录成功");
+        return ApiResponse.success(noteService.fetchNoteShareAccessLogsByNoteShareId(getIdFromAuthentication(authentication), noteShareId, cursor), "获取分享访问记录成功");
     }
 
     @GetMapping("/article/{detailNodeId}")

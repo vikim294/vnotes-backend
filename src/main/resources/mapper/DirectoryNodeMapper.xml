@@ -247,8 +247,21 @@
         left join directory_nodes dir on logs.target = 'NOTE' and dir.id = logs.target_id
         left join detail_nodes de on logs.target = 'ARTICLE' and de.id = logs.target_id
 
-        where logs.note_share_id = #{noteShareId}
+        <where>
+            and logs.note_share_id = #{noteShareId}
+
+            <if test="cursorCreatedAt != null and cursorId != null">
+                and (
+                    logs.created_at &lt; #{cursorCreatedAt}
+                    or (
+                        logs.created_at = #{cursorCreatedAt}
+                        and logs.id &lt; #{cursorId}
+                    )
+                )
+            </if>
+        </where>
 
         order by logs.created_at desc, logs.id desc
+        limit #{limit}
     </select>
 </mapper>

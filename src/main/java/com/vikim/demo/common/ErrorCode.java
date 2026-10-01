@@ -330,6 +330,12 @@ public enum ErrorCode {
             "用户已被封禁"
     ),
 
+    INVALID_CURSOR(
+            40050,
+            HttpStatus.BAD_REQUEST,
+            "非法 cursor 参数"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
