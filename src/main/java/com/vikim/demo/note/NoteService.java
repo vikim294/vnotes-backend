@@ -77,9 +77,42 @@ public class NoteService {
         // 再根据 id 找数据
         List<DirectoryNodeWithTagRow> rows = new ArrayList<>();
 
+        // 祖先到节点自己的 label 路径
+        Map<Long, List<String>> idToPathListMap = new HashMap<>();
+
         // ids 非空才找
         if (!ids.isEmpty()) {
             rows = directoryNodeMapper.getDirectoryNodesByIds(ids);
+
+            // 找出 ids 节点的所有祖先节点
+            List<GetAncestorDirectoryNodesByIdsResponse> ancestors = directoryNodeMapper.getAncestorDirectoryNodesByIds(ids);
+            // 转成 Map
+            Map<Long, GetAncestorDirectoryNodesByIdsResponse> idToAncestorMap = new HashMap<>();
+            for(GetAncestorDirectoryNodesByIdsResponse item: ancestors){
+                idToAncestorMap.put(item.id(), item);
+            }
+
+            // 对 ids 每个节点，构造祖先到节点自己的 label 路径
+            for(Long id: ids) {
+                Long parentId = id;
+                // 防止存在环
+                Set<Long> visited = new HashSet<>();
+
+                while(idToAncestorMap.get(parentId) != null) {
+                    if(visited.contains(parentId)) {
+                        throw new BusinessException(ErrorCode.DIRECTORY_NODE_RELATION_HAS_LOOP);
+                    }
+                    visited.add(parentId);
+
+                    idToPathListMap.computeIfAbsent(
+                            id,
+                            ignored -> new ArrayList<>()
+                    ).addFirst(idToAncestorMap.get(parentId).label());
+
+                    // 继续
+                    parentId = idToAncestorMap.get(parentId).parentId();
+                }
+            }
         }
 
         // 组装响应
@@ -102,6 +135,7 @@ public class NoteService {
                 responseMap.put(row.id(), new FetchDirectoryNodesWithTagsResponse(
                         row.id(),
                         row.parentId(),
+                        idToPathListMap.get(row.id()),
                         row.label(),
                         row.x(),
                         row.y(),

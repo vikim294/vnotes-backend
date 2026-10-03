@@ -127,6 +127,31 @@
         <include refid="searchDirectoryNodesConditions"/>
     </select>
 
+    <select id="getAncestorDirectoryNodesByIds" resultType="com.vikim.demo.note.GetAncestorDirectoryNodesByIdsResponse">
+        WITH RECURSIVE tree AS (
+            SELECT id, parent_id, label
+            FROM directory_nodes
+            WHERE id in
+                <foreach collection="ids"
+                   item="id"
+                   open="("
+                   separator=","
+                   close=")">
+                    #{id}
+                </foreach>
+
+            UNION DISTINCT
+
+            SELECT dir.id, dir.parent_id, dir.label
+            FROM directory_nodes dir
+            JOIN tree
+            ON dir.id = tree.parent_id
+        )
+
+        select id, parent_id, label
+        from tree;
+    </select>
+
     <select id="getDirectoryNodesByIds" resultType="com.vikim.demo.note.DirectoryNodeWithTagRow">
         select d.id, d.parent_id, d.label, d.x, d.y, d.node_type, coalesce(ns.status = 'ACTIVE', false) as shared, t.id as tagId, t.name as tagName, d.created_at, d.updated_at
         from directory_nodes d

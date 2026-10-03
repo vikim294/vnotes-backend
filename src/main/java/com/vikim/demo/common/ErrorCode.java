@@ -546,6 +546,12 @@ public enum ErrorCode {
             "admin/更新角色失败"
     ),
 
+    DIRECTORY_NODE_RELATION_HAS_LOOP(
+            50037,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "目录节点关系存在环"
+    ),
+
     ;
 
     private final int code;

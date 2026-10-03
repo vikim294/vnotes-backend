@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -15,6 +16,7 @@ import java.util.Set;
 public class FetchDirectoryNodesWithTagsResponse {
     private Long id;
     private Long parentId;
+    private List<String> path;
     private String label;
     private BigDecimal x;
     private BigDecimal y;

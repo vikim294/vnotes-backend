@@ -33,6 +33,8 @@ public interface DirectoryNodeMapper {
 
     int countDirectoryNodes(SearchDirectoryNodeMapperParam param);
 
+    List<GetAncestorDirectoryNodesByIdsResponse> getAncestorDirectoryNodesByIds(@Param("ids") List<Long> ids);
+
     List<DirectoryNodeWithTagRow> getDirectoryNodesByIds(@Param("ids") List<Long> ids);
 
     boolean hasDirectoryNode(@Param("userId") Long userId, @Param("id") Long id, @Param("nodeType") NodeType nodeType);
