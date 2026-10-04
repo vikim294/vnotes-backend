@@ -78,19 +78,29 @@ jobs:
             
             docker compose pull app
             docker compose up -d app
+            
+            deploy_ok=false
 
             for attempt in $(seq 1 12); do
               if curl -fsS http://127.0.0.1:8080/health; then
                 echo "Health check passed"
-                exit 0
+                deploy_ok=true
+                break
               fi
 
               echo "Waiting for application: ${attempt}/12"
               sleep 10
             done
 
-            echo "Vnotes failed to become healthy..."
-            
-            docker compose logs --tail=100 app
-           
-            exit 1
+            # failed
+            if [ "$deploy_ok" != "true" ]; then
+              echo "Vnotes failed to become healthy..."
+              docker compose logs --tail=100 app
+              exit 1
+            fi
+
+            # 删除超过 7 天，并且未被任何容器使用的镜像
+            docker image prune -a -f --filter "until=168h"
+
+            # 打印清理后的 Docker 磁盘占用
+            docker system df
