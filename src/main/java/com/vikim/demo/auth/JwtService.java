@@ -42,7 +42,6 @@ public class JwtService {
 
         return new LoginResponse(
                 token,
-                "Bearer",
                 properties.accessTokenTtl().toSeconds(),
                 userId
         );
@@ -71,7 +70,6 @@ public class JwtService {
 
         return new LoginResponse(
                 token,
-                "Bearer",
                 properties.accessTokenTtl().toSeconds(),
                 userId
         );
