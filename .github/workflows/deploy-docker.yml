@@ -1,15 +1,19 @@
-name: Deploy - Docker
+name: Deploy - Legacy docker
+
+#on:
+#  # 自动触发
+#  push:
+#    branches:
+#      - main
 
 on:
-  # 自动触发
-  push:
-    branches:
-      - main
+  # 改为手动触发
+  workflow_dispatch:
 
-# 新的 push 的 workflow 会导致旧 workflow 取消，避免竞态
+# 避免 Legacy docker 和灰度部署流程 同时进行，同时修改 app 镜像
 concurrency:
-  group: vnotes-production
-  cancel-in-progress: true
+  group: deployment
+  cancel-in-progress: false
 
 # push 镜像到 ghcr 需要 permissions
 permissions:
@@ -73,8 +77,19 @@ jobs:
             set -e
             
             cd /opt/vnotes
+  
+            IMAGE_TAG="${{ github.sha }}"
             
-            export APP_IMAGE_TAG=${{ github.sha }}
+            # 更新 .env 中的 APP_IMAGE_TAG 环境变量
+            if grep -q '^APP_IMAGE_TAG=' .env; then
+              # 存在则替换
+              sed -i "s|^APP_IMAGE_TAG=.*$|APP_IMAGE_TAG=${IMAGE_TAG}|" .env
+            else
+              # 不存在则添加
+              printf 'APP_IMAGE_TAG=%s\n' "$IMAGE_TAG" >> .env
+            fi
+            
+            export APP_IMAGE_TAG="$IMAGE_TAG"
             
             docker compose pull app
             docker compose up -d app
@@ -99,8 +114,8 @@ jobs:
               exit 1
             fi
 
-            # 删除超过 7 天，并且未被任何容器使用的镜像
-            docker image prune -a -f --filter "until=168h"
-
-            # 打印清理后的 Docker 磁盘占用
-            docker system df
+#            # 删除超过 7 天，并且未被任何容器使用的镜像
+#            docker image prune -a -f --filter "until=168h"
+#
+#            # 打印清理后的 Docker 磁盘占用
+#            docker system df

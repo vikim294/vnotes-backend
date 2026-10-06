@@ -25,6 +25,7 @@ public class OAuthController {
     private final LoginCodeService loginCodeService;
     private final JwtService jwtService;
     private final AuthService authService;
+    private final LoginResponseBuilder loginResponseBuilder;
 
     private String encodeUri(String uri) {
         return URLEncoder.encode(uri, StandardCharsets.UTF_8);
@@ -72,7 +73,7 @@ public class OAuthController {
     }
 
     @PostMapping("/token")
-    public ApiResponse<LoginResponse> getTokenByLoginCode(
+    public ResponseEntity<ApiResponse<LoginResponse>> getTokenByLoginCode(
             @Valid @RequestBody GetTokenByLoginCodeRequest request
     ) {
         Long userId = loginCodeService.getUserIdByLoginCode(request.code());
@@ -82,6 +83,7 @@ public class OAuthController {
             throw new BusinessException(ErrorCode.USER_IS_DISABLED);
         }
 
-        return ApiResponse.success(jwtService.generateAccessToken(userId), "获取 token 成功");
+        LoginResponse response = jwtService.generateAccessToken(userId);
+        return loginResponseBuilder.build(response);
     }
 }

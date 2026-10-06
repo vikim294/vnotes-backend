@@ -1,0 +1,62 @@
+name: deploy image on canary
+
+on:
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image SHA tag"
+        required: true
+        # 提供 input 输入框
+        type: string
+
+concurrency:
+  group: deployment
+  # 排队进行
+  cancel-in-progress: false
+
+jobs:
+
+  deploy-on-canary:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ssh 到 vps
+      - name: Deploy to canary
+        uses: appleboy/ssh-action@v1
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: IMAGE_TAG
+          script: |
+            set -e
+            
+            cd /opt/vnotes
+            
+            /opt/vnotes/deploy-canary.sh "${IMAGE_TAG}"
+            
+            # health check
+            deploy_ok=false
+
+            for attempt in $(seq 1 12); do
+              if curl -fsS http://127.0.0.1:8081/health; then
+                echo "Health check passed(Canary)"
+                deploy_ok=true
+                break
+              fi
+
+              echo "Waiting for application(Canary): ${attempt}/12"
+              sleep 10
+            done
+
+            # failed
+            if [ "$deploy_ok" != "true" ]; then
+              echo "Vnotes(Canary) failed to become healthy..."
+              docker compose logs --tail=100 app-canary
+              exit 1
+            fi

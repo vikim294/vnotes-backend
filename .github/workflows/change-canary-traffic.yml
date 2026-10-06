@@ -1,0 +1,74 @@
+name: change canary traffic
+
+on:
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      percentage:
+        description: "Canary percentage"
+        required: true
+        type: choice
+        options:
+          - "0"
+          - "1"
+          - "5"
+          - "10"
+          - "25"
+          - "50"
+          - "100"
+
+# 新的 push 的 workflow 会导致旧 workflow 取消，避免竞态
+concurrency:
+  # 与 deploy-image-on-canary 用同一个 concurrency group，避免部署过程中 并发切流
+  group: deployment
+  # 排队进行
+  cancel-in-progress: false
+
+jobs:
+
+  change-canary-traffic:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ssh 到 vps
+      - name: Change canary traffic
+        uses: appleboy/ssh-action@v1
+        env:
+          PERCENTAGE: ${{ inputs.percentage }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: PERCENTAGE
+          script: |
+            set -e
+            
+            cd /opt/vnotes
+            
+            if [ "$PERCENTAGE" -gt 0 ]; then
+            
+               is_healthy=false
+
+                for attempt in $(seq 1 3); do
+                  if curl -fsS http://127.0.0.1:8081/health; then
+                    echo "Health check passed(Canary)"
+                    is_healthy=true
+                    break
+                  fi
+    
+                  echo "Waiting for application: ${attempt}/3"
+                  sleep 10
+                done
+    
+                # failed
+                if [ "$is_healthy" != "true" ]; then
+                  echo "Vnotes(Canary) failed to become healthy..."
+                  docker compose logs --tail=100 app-canary
+                  exit 1
+                fi
+            
+            fi
+            
+            sudo /opt/vnotes/set-canary-percentage.sh "$PERCENTAGE"

@@ -2,23 +2,24 @@ package com.vikim.demo.auth;
 
 import com.vikim.demo.common.ApiResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
-
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
+    private final LoginResponseBuilder loginResponseBuilder;
 
     @PostMapping("/login/email-password")
-    public ApiResponse<LoginResponse> loginByEmailAndPassword(
+    public ResponseEntity<ApiResponse<LoginResponse>> loginByEmailAndPassword(
             @Valid @RequestBody LoginByEmailAndPasswordRequest request
     ) {
-        return ApiResponse.success(authService.loginByEmailAndPassword(request), "登录成功");
+        LoginResponse response = authService.loginByEmailAndPassword(request);
+        return loginResponseBuilder.build(response);
     }
 
     @PostMapping("/send-verification-code")
@@ -30,9 +31,10 @@ public class AuthController {
     }
 
     @PostMapping("/login/email-verification-code")
-    public ApiResponse<LoginResponse> loginByEmailAndVerificationCode(
+    public ResponseEntity<ApiResponse<LoginResponse>> loginByEmailAndVerificationCode(
             @Valid @RequestBody LoginByEmailAndVerificationCodeRequest request
     ) {
-        return ApiResponse.success(authService.loginByEmailAndVerificationCode(request), "登录成功");
+        LoginResponse response = authService.loginByEmailAndVerificationCode(request);
+        return loginResponseBuilder.build(response);
     }
 }

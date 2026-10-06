@@ -1,0 +1,84 @@
+name: promote canary to stable
+
+on:
+  # 手动触发
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deployment
+  # 后续请求排队，不要杀掉正在执行的 workflow
+  cancel-in-progress: false
+
+jobs:
+
+  promote-canary-to-stable:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 读取当前正在灰度的镜像版本 CANARY_IMAGE_TAG
+      - name: Get canary image tag
+        id: canary-tag
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          capture_stdout: true
+          script: |
+            sed -n 's/^CANARY_IMAGE_TAG=//p' /opt/vnotes/.env | tail -n 1
+
+      # 2. stable 容器升级成 canary 的同一镜像
+      - name: promote canary to stable
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            
+            /opt/vnotes/promote-canary.sh
+
+      # 3. 登录 GHCR
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. 给经过灰度验证的 SHA 镜像添加 stable tag
+      - name: Tag image as stable
+        env:
+          # 用到了步骤 1 的输出结果
+          IMAGE_TAG: ${{ steps.canary-tag.outputs.stdout }}
+        run: |
+          IMAGE_TAG="$(printf '%s' "$IMAGE_TAG" | tr -d '\r\n')"
+
+          echo "Promoting image ${IMAGE_TAG} to stable"
+
+          docker buildx imagetools create \
+            -t ghcr.io/vikim294/vnotes:stable \
+            ghcr.io/vikim294/vnotes:${IMAGE_TAG}
+
+      # 5. stable 已经健康，GHCR stable tag 也成功了，再把流量 100%(canary) -> 0%(stable) 切回来
+      - name: Switch traffic to stable
+        uses: appleboy/ssh-action@v1
+        with:
+           host: ${{ secrets.SERVER_HOST }}
+           username: ${{ secrets.SERVER_USER }}
+           key: ${{ secrets.SERVER_SSH_KEY }}
+           script: |
+             set -e
+  
+             sudo /opt/vnotes/set-canary-percentage.sh 0
+             
+             # 删除超过 7 天，并且未被任何容器使用的镜像
+             docker image prune -a -f --filter "until=168h"
+             
+             # 打印清理后的 Docker 磁盘占用
+             docker system df
