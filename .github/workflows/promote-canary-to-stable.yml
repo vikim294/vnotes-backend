@@ -30,7 +30,16 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           capture_stdout: true
           script: |
-            sed -n 's/^CANARY_IMAGE_TAG=//p' /opt/vnotes/.env | tail -n 1
+            IMAGE_TAG="$(
+              sed -n 's/^CANARY_IMAGE_TAG=//p' /opt/vnotes/.env |
+              tail -n 1 |
+              tr -d '\r\n'
+            )"
+
+            # 40 位 SHA 校验
+            [[ "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]] || exit 1
+
+            echo "CANARY_TAG=${IMAGE_TAG}"
 
       # 2. stable 容器升级成 canary 的同一镜像
       - name: promote canary to stable
@@ -55,15 +64,30 @@ jobs:
       - name: Tag image as stable
         env:
           # 用到了步骤 1 的输出结果
-          IMAGE_TAG: ${{ steps.canary-tag.outputs.stdout }}
+          SSH_OUTPUT: ${{ steps.canary-tag.outputs.stdout }}
         run: |
-          IMAGE_TAG="$(printf '%s' "$IMAGE_TAG" | tr -d '\r\n')"
+          set -euo pipefail
 
+          IMAGE_TAG="$(
+            printf '%s\n' "$SSH_OUTPUT" \
+              | tr -d '\r' \
+              | sed -nE 's/^CANARY_TAG=([0-9a-f]{40})$/\1/p' \
+              | tail -n 1
+          )"
+
+          # 40 位 SHA 二次校验
+          if [[ ! "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Could not extract CANARY_TAG from SSH output"
+            printf '%s\n' "$SSH_OUTPUT"
+            exit 1
+          fi
+
+          # 解析成功
           echo "Promoting image ${IMAGE_TAG} to stable"
 
           docker buildx imagetools create \
-            -t ghcr.io/vikim294/vnotes:stable \
-            ghcr.io/vikim294/vnotes:${IMAGE_TAG}
+            -t "ghcr.io/${{ github.repository_owner }}/vnotes:stable" \
+            "ghcr.io/${{ github.repository_owner }}/vnotes:${IMAGE_TAG}"
 
       # 5. stable 已经健康，GHCR stable tag 也成功了，再把流量 100%(canary) -> 0%(stable) 切回来
       - name: Switch traffic to stable
