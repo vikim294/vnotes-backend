@@ -130,7 +130,7 @@ public class NoteController {
     }
 
     @GetMapping("/directory/{id}/detail-nodes")
-    public ApiResponse<List<FetchDetailNodesResponse>> fetchDetailNodesByDirectoryNodeId(
+    public ApiResponse<FetchDetailNodesByDirectoryNodeIdResponse> fetchDetailNodesByDirectoryNodeId(
             Authentication authentication,
             @PathVariable("id") Long id
     ) {
@@ -214,13 +214,13 @@ public class NoteController {
     }
 
     @PostMapping("/directory/{id}/detail-nodes/move")
-    public ApiResponse<Void> moveDetailNode(
+    public ApiResponse<Long> moveDetailNode(
             Authentication authentication,
             @PathVariable("id") Long oldDirectoryNodeId,
             @Valid @RequestBody MoveDetailNodeRequest request
     ) {
-        noteService.moveDetailNode(getIdFromAuthentication(authentication), request.detailNodeId(), oldDirectoryNodeId, request.destDirectoryNodeId());
-        return ApiResponse.success("移动详情节点成功");
+        noteService.moveDetailNode(getIdFromAuthentication(authentication), request.detailNodeId(), oldDirectoryNodeId, request.destDirectoryNodeId(), request.sourceVersion());
+        return ApiResponse.success(request.sourceVersion() + 1, "移动详情节点成功");
     }
 
     @GetMapping("/directory/{id}/tag")

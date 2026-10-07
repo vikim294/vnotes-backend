@@ -213,7 +213,7 @@ public interface DirectoryNodeMapper {
     boolean hasUserSharedNote(@Param("userId") Long userId, @Param("noteShareId") Long noteShareId);
 
     @Select("""
-            select id, label, node_type
+            select id, label, node_type, version
             from directory_nodes
             where id = #{id}
                 and user_id = #{userId}
@@ -237,4 +237,31 @@ public interface DirectoryNodeMapper {
             limit 7
             """)
     List<NoteSearchHistoryResponse> getUserNoteSearchHistory(@Param("userId") Long userId);
+
+    @Update("""
+            update directory_nodes
+            set version = version + 1
+            where user_id = #{userId}
+                and id = #{id}
+                and version = #{version}
+                and node_type = 'DETAIL'
+                and deleted_at is null
+            """)
+    int updateVersion(@Param("userId") Long userId, @Param("id") Long id, @Param("version") Long version);
+
+    @Update("""
+            update directory_nodes
+            set version = version + 1
+            where user_id = #{userId}
+                and node_type = 'DETAIL'
+                and deleted_at is null
+                and (
+                    (
+                        id = #{oldDirectoryNodeId}
+                        and version = #{sourceVersion}
+                    )
+                    or id = #{destDirectoryNodeId}
+                )
+            """)
+    int updateVersionsInNodeMove(@Param("userId") Long userId, @Param("oldDirectoryNodeId") Long oldDirectoryNodeId, @Param("sourceVersion") Long sourceVersion, @Param("destDirectoryNodeId") Long destDirectoryNodeId);
 }

@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public record BatchUpdateDetailNodesRequest(
+        @NotNull(message = "version 不能为空")
+        Long version,
+
         @NotNull(message = "added 不能为空")
         @Size(max = 1000, message = "一次最多新增 1000 个节点")
         List<@Valid BatchCreateDetailNodesDTO> added,

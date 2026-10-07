@@ -12,17 +12,34 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DetailNodeTransactionService {
 
+    private final DirectoryNodeMapper directoryNodeMapper;
     private final DetailNodeMapper detailNodeMapper;
     private final ArticleMapper articleMapper;
 
     // 插入、更新 数据库操作
     @Transactional
     public BatchUpdateDetailNodesTransactionResult batchUpdateDetailNotesToDB(
+            Long userId,
             Long directoryNodeId,
             BatchUpdateDetailNodesRequest request,
             Map<UUID, UploadImageOfNodeVO> succeededImageNodes,
             Set<Long> deletedIdsToBeVerified
     ) {
+        // 更新 directory node version
+        if(directoryNodeMapper.updateVersion(userId, directoryNodeId, request.version()) != 1) {
+            // 影响行不为 1 就是没更新成功（已被更新 or 没匹配到）
+
+            // 该目录节点存在
+            if(directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+                // 说明已被更新
+                throw new BusinessException(ErrorCode.NOTE_VERSION_CONFLICT);
+            }
+            // 该目录节点不存在
+            else {
+                throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+            }
+        }
+
         Map<UUID, Long> uuidToId = new HashMap<>();
 
         // --- 新增节点、记录 uuidToId
@@ -128,7 +145,7 @@ public class DetailNodeTransactionService {
             detailNodeMapper.batchDeleteDetailNodes(directoryNodeId, deletedIdsToBeVerified);
         }
 
-        return new BatchUpdateDetailNodesTransactionResult(new BatchUpdateDetailNodesResponse(uuidToId), deletedImageObjectKeys);
+        return new BatchUpdateDetailNodesTransactionResult(new BatchUpdateDetailNodesResponse(uuidToId, request.version() + 1), deletedImageObjectKeys);
     }
 
     private void validateCreateParam(CreateDetailNodeMapperParam param){

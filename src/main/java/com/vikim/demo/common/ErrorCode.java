@@ -336,6 +336,12 @@ public enum ErrorCode {
             "非法 cursor 参数"
     ),
 
+    NOTE_VERSION_CONFLICT(
+            40051,
+            HttpStatus.CONFLICT,
+            "笔记已被修改，请刷新后重试"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,

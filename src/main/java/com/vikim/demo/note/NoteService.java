@@ -9,6 +9,7 @@ import com.vikim.demo.tag.TagResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
@@ -344,13 +345,15 @@ public class NoteService {
                 .map(FetchDetailNodesResponse::from).toList();
     }
 
-    public List<FetchDetailNodesResponse> fetchDetailNodesByDirectoryNodeId(Long userId, Long directoryNodeId) {
+    @Transactional(
+            readOnly = true,
+            isolation = Isolation.REPEATABLE_READ
+    )
+    public FetchDetailNodesByDirectoryNodeIdResponse fetchDetailNodesByDirectoryNodeId(Long userId, Long directoryNodeId) {
         // 先校验用户是否拥有该 director node
-        if (!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
-            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
-        }
+        GetDirectoryNodeByIdResponse directoryNode = directoryNodeMapper.getDirectoryNodeById(userId, directoryNodeId).orElseThrow(()->new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND));
 
-        return detailNodeMapper.fetchDetailNodesByDirectoryNodeId(directoryNodeId).stream()
+        List<FetchDetailNodesResponse> detailNodes = detailNodeMapper.fetchDetailNodesByDirectoryNodeId(directoryNodeId).stream()
                 .map(row -> {
                     return new FetchDetailNodesResponse(
                             row.id(),
@@ -371,6 +374,8 @@ public class NoteService {
                             row.updatedAt().toInstant(ZoneOffset.UTC)
                     );
                 }).toList();
+
+        return new FetchDetailNodesByDirectoryNodeIdResponse(directoryNode.version(), detailNodes);
     }
 
     // 图片节点的文件存 vps 本地
@@ -499,7 +504,7 @@ public class NoteService {
             }
 
             // 再更新数据库
-            BatchUpdateDetailNodesTransactionResult result = detailNodeTransactionService.batchUpdateDetailNotesToDB(directoryNodeId, request, succeededImageNodes, deletedIdsToBeVerified);
+            BatchUpdateDetailNodesTransactionResult result = detailNodeTransactionService.batchUpdateDetailNotesToDB(userId, directoryNodeId, request, succeededImageNodes, deletedIdsToBeVerified);
 
             // 删除 deleted 节点 相关图片节点对应的文件
             oldDeleteFilesOfImageNodes(result.deletedImageObjectKeys());
@@ -728,7 +733,7 @@ public class NoteService {
             }
 
             // 再更新数据库
-            BatchUpdateDetailNodesTransactionResult res = detailNodeTransactionService.batchUpdateDetailNotesToDB(directoryNodeId, request, succeededImageNodes, deletedIdsToBeVerified);
+            BatchUpdateDetailNodesTransactionResult res = detailNodeTransactionService.batchUpdateDetailNotesToDB(userId, directoryNodeId, request, succeededImageNodes, deletedIdsToBeVerified);
 
             // 删除 deleted 节点 相关图片节点对应的文件
             deleteFilesOfImageNodes(res.deletedImageObjectKeys());
@@ -803,7 +808,7 @@ public class NoteService {
     // 移动 DETAIL 目录节点 A 下的详情节点 X（包括后代节点）
     // 到 DETAIL 目录节点 B 下，作为一个独立节点/树
     @Transactional
-    public void moveDetailNode(Long userId, Long detailNodeId, Long oldDirectoryNodeId, Long destDirectoryNodeId) {
+    public void moveDetailNode(Long userId, Long detailNodeId, Long oldDirectoryNodeId, Long destDirectoryNodeId, Long sourceVersion) {
         if (Objects.equals(oldDirectoryNodeId, destDirectoryNodeId)) {
             throw new BusinessException(ErrorCode.OLD_AND_DEST_DIRECTORY_NODES_ARE_SAME_CODE);
         }
@@ -820,6 +825,21 @@ public class NoteService {
         // 校验用户有该 destDirectoryNode
         if (!directoryNodeMapper.hasDirectoryNode(userId, destDirectoryNodeId, NodeType.DETAIL)) {
             throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 更新目录节点 version
+        // 因为移动节点到目标节点 只会新增一个独立节点树，和已有节点没关系，所以不要求目标目录节点是最新版本
+        if(directoryNodeMapper.updateVersionsInNodeMove(userId, oldDirectoryNodeId, sourceVersion, destDirectoryNodeId) != 2) {
+            if(!directoryNodeMapper.hasDirectoryNode(userId, destDirectoryNodeId, NodeType.DETAIL)) {
+                throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+            }
+
+            if(!directoryNodeMapper.hasDirectoryNode(userId, oldDirectoryNodeId, NodeType.DETAIL)) {
+                throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+            }
+            else {
+                throw new BusinessException(ErrorCode.NOTE_VERSION_CONFLICT);
+            }
         }
 
         // 更新 X 和所有后代的 directory_node_id 和 x/y，并更新 X 的 parentId 为 null

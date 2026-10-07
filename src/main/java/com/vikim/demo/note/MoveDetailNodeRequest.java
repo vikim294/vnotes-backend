@@ -3,6 +3,9 @@ package com.vikim.demo.note;
 import jakarta.validation.constraints.NotNull;
 
 public record MoveDetailNodeRequest(
+        @NotNull(message = "sourceVersion 不能为空")
+        Long sourceVersion,
+
         @NotNull(message = "详情节点不能为空")
         Long detailNodeId,
 
