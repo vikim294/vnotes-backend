@@ -59,6 +59,10 @@ public class NoteService {
                 .map(FetchDirectoryNodesResponse::from).toList();
     }
 
+    // 需要用事务 让方法中的所有数据库查询 使用同一个 REPEATABLE_READ 快照
+    // 由于方法末尾还会写入搜索历史，所以不能直接用 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    // 而是用普通的 @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public PageResponse<FetchDirectoryNodesWithTagsResponse> searchDirectoryNodes(Long userId, String keyword, int pageSize, int page, NodeType nodeType, Set<Long> tagIds, LocalDateTime startTime, LocalDateTime endTime) {
         // 校验 tags 都是用户的
         if (tagIds != null && !tagIds.isEmpty() && tagIds.size() != tagMapper.checkUserHasTags(userId, tagIds)) {
