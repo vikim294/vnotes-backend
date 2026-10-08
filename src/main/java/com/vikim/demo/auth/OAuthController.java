@@ -3,6 +3,8 @@ package com.vikim.demo.auth;
 import com.vikim.demo.common.ApiResponse;
 import com.vikim.demo.common.BusinessException;
 import com.vikim.demo.common.ErrorCode;
+import com.vikim.demo.user.User;
+import com.vikim.demo.user.UserStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -77,13 +79,14 @@ public class OAuthController {
             @Valid @RequestBody GetTokenByLoginCodeRequest request
     ) {
         Long userId = loginCodeService.getUserIdByLoginCode(request.code());
+        User user = authService.findUserById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 判断用户 status
-        if(!authService.isActiveUser(userId)) {
+        if (user.getStatus() == UserStatus.DISABLED) {
             throw new BusinessException(ErrorCode.USER_IS_DISABLED);
         }
 
-        LoginResponse response = jwtService.generateAccessToken(userId);
+        LoginResponse response = jwtService.generateAccessToken(userId, user.getTokenVersion());
         return loginResponseBuilder.build(response);
     }
 }

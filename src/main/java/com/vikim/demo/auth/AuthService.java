@@ -29,8 +29,8 @@ public class AuthService {
         return authMapper.findUserByEmail(email);
     }
 
-    public boolean isActiveUser(Long userId) {
-        return authMapper.isActiveUser(userId);
+    public Optional<User> findUserById(Long id) {
+        return authMapper.findUserById(id);
     }
 
     public LoginResponse loginByEmailAndPassword(LoginByEmailAndPasswordRequest request) {
@@ -49,7 +49,7 @@ public class AuthService {
         }
 
         // 生成并返回 token
-        return jwtService.generateAccessToken(user.getId());
+        return jwtService.generateAccessToken(user.getId(), user.getTokenVersion());
     }
 
     private String generateCode() {
@@ -94,6 +94,6 @@ public class AuthService {
         loginVerificationCodeService.verify(user.getId(), request.verificationCode());
 
         // 生成并返回 token
-        return jwtService.generateAccessToken(user.getId());
+        return jwtService.generateAccessToken(user.getId(), user.getTokenVersion());
     }
 }

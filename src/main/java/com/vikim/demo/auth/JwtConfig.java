@@ -2,6 +2,8 @@ package com.vikim.demo.auth;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 
@@ -49,16 +51,24 @@ public class JwtConfig {
     @Bean
     public JwtDecoder jwtDecoder(
             SecretKey secretKey,
-            JwtProperties properties
+            JwtProperties properties,
+            ClientJwtValidator clientJwtValidator
     ) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder
-                .withSecretKey(secretKey)
-                .macAlgorithm(MacAlgorithm.HS256)
-                .build();
+        NimbusJwtDecoder decoder =
+                NimbusJwtDecoder
+                        .withSecretKey(secretKey)
+                        .macAlgorithm(MacAlgorithm.HS256)
+                        .build();
 
-        decoder.setJwtValidator(
+        OAuth2TokenValidator<Jwt> defaultValidator =
                 JwtValidators.createDefaultWithIssuer(
                         properties.issuer()
+                );
+
+        decoder.setJwtValidator(
+                new DelegatingOAuth2TokenValidator<>(
+                        defaultValidator, // 校验签名、issuer、过期
+                        clientJwtValidator // 自定义校验，校验 tokenType、status、tokenVersion
                 )
         );
 

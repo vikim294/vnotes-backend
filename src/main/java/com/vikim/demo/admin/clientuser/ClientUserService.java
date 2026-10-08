@@ -43,12 +43,20 @@ public class ClientUserService {
 
     @PreAuthorize("hasAuthority('client:user:enable_and_disable')")
     @Transactional
-    // todo 禁用只能阻止新登录。如果要立即生效，需要在请求鉴权链中检查状态，或引入 tokenVrsion/Redis 撤销机制
     public void enableOrDisableClientUser(
             Long operatorId,
             EnableOrDisableClientUserRequest request
     ){
-        if(clientUserMapper.enableOrDisableClientUser(request.userId(), request.status()) != 1) {
+        int affectedRows = 0;
+
+        if(request.status() == UserStatus.DISABLED) {
+            affectedRows = clientUserMapper.disableClientUser(request.userId());
+        }
+        else {
+            affectedRows = clientUserMapper.enableClientUser(request.userId());
+        }
+
+        if(affectedRows != 1) {
             // 说明 where 匹配到 0 行
 
             // 如果用户不存在

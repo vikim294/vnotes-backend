@@ -23,7 +23,7 @@ public class JwtService {
         this.properties = properties;
     }
 
-    public LoginResponse generateAccessToken(Long userId) {
+    public LoginResponse generateAccessToken(Long userId, Long tokenVersion) {
         Instant issuedAt = Instant.now();
         Instant expiresAt =
                 issuedAt.plus(properties.accessTokenTtl());
@@ -34,6 +34,9 @@ public class JwtService {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .id(UUID.randomUUID().toString())
+                // 塞自定义数据
+                .claim("tokenType", "CLIENT")
+                .claim("tokenVersion", tokenVersion)
                 .build();
 
         String token = jwtEncoder.encode(

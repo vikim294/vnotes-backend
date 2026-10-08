@@ -1,6 +1,5 @@
 package com.vikim.demo.admin.clientuser;
 
-import com.vikim.demo.user.UserStatus;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -34,11 +33,20 @@ public interface ClientUserMapper {
 
     @Update("""
             update users
-            set status = #{status}
+            set status = 'ACTIVE'
             where id = #{userId}
-                and status != #{status}
+                and status = 'DISABLED'
             """)
-    int enableOrDisableClientUser(@Param("userId") Long userId, @Param("status") UserStatus status);
+    int enableClientUser(@Param("userId") Long userId);
+
+    @Update("""
+            update users
+            set status = 'DISABLED',
+                token_version = token_version + 1
+            where id = #{userId}
+                and status = 'ACTIVE'
+            """)
+    int disableClientUser(@Param("userId") Long userId);
 
     @Select("""
             select exists(

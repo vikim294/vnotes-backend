@@ -12,12 +12,15 @@ public class User {
 
     private String username;
 
-    private String passwordHash;
-
     private String email;
+
+    private String passwordHash;
 
     private String avatarUrl;
 
     private LocalDateTime createdAt;
 
+    private UserStatus status;
+
+    private Long tokenVersion;
 }
