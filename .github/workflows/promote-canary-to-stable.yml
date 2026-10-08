@@ -103,7 +103,7 @@ jobs:
              sudo /opt/vnotes/set-canary-percentage.sh 0
              
              # 删除超过 7 天，并且未被任何容器使用的镜像
-             docker image prune -a -f --filter "until=168h"
+             docker image prune -a -f --filter "until=168h" || true
              
              # 打印清理后的 Docker 磁盘占用
-             docker system df
+             docker system df || true
