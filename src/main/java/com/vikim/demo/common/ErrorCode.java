@@ -558,6 +558,12 @@ public enum ErrorCode {
             "目录节点关系存在环"
     ),
 
+    CREATE_NOTE_ACCESS_RECORD_FAILED(
+            50038,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "创建笔记访问记录失败"
+    ),
+
     ;
 
     private final int code;

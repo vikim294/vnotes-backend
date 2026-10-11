@@ -405,4 +405,20 @@ public class NoteController {
     ) {
         return ApiResponse.success(noteService.getUserNoteSearchHistory(getIdFromAuthentication(authentication)), "获取笔记搜索历史成功");
     }
+
+    @PostMapping("/directory/{id}/access")
+    public ApiResponse<Void> createNoteAccessRecord(
+            Authentication authentication,
+            @PathVariable("id") Long id
+    ) {
+        noteService.createNoteAccessRecord(getIdFromAuthentication(authentication), id);
+        return ApiResponse.success("创建笔记访问记录成功");
+    }
+
+    @GetMapping("/directory/recent-accesses")
+    public ApiResponse<List<GetRecentAccessedNoteHistoryResponse>> getRecentAccessedNoteHistory(
+            Authentication authentication
+    ) {
+        return ApiResponse.success(noteService.getRecentAccessedNoteHistory(getIdFromAuthentication(authentication)), "获取最近访问笔记历史成功");
+    }
 }

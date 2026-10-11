@@ -1079,4 +1079,28 @@ public class NoteService {
     public List<NoteSearchHistoryResponse> getUserNoteSearchHistory(Long userId) {
         return directoryNodeMapper.getUserNoteSearchHistory(userId);
     }
+
+    public void createNoteAccessRecord(Long userId, Long directoryNodeId){
+        if(!directoryNodeMapper.hasDirectoryNode(userId, directoryNodeId, NodeType.DETAIL)) {
+            throw new BusinessException(ErrorCode.DIRECTORY_NODE_NOT_FOUND);
+        }
+
+        // 使用 upsert 后需要注意：
+        // insert 时，影响行会是 1
+        // 更新已有记录时，影响行会是 2
+        // 所以这里不要再用影响行是否为 1 来判断了
+        // 另外，其实这里没必要判断影响行，因为不管影响行是多少，只要 SQL 成功执行了，业务目标就已经达成了（记录本次访问）
+        directoryNodeMapper.createNoteAccessRecord(userId, directoryNodeId);
+    }
+
+    public List<GetRecentAccessedNoteHistoryResponse> getRecentAccessedNoteHistory(Long userId){
+        return directoryNodeMapper.getRecentAccessedNoteHistory(userId).stream()
+                .map(row -> new GetRecentAccessedNoteHistoryResponse(
+                        row.id(),
+                        row.directoryNodeId(),
+                        row.directoryNodeLabel(),
+                        row.accessedAt().toInstant(ZoneOffset.UTC)
+                ))
+                .toList();
+    }
 }

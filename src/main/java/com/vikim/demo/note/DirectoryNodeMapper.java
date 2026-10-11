@@ -264,4 +264,24 @@ public interface DirectoryNodeMapper {
                 )
             """)
     int updateVersionsInNodeMove(@Param("userId") Long userId, @Param("oldDirectoryNodeId") Long oldDirectoryNodeId, @Param("sourceVersion") Long sourceVersion, @Param("destDirectoryNodeId") Long destDirectoryNodeId);
+
+    @Insert("""
+            insert into note_access_history(user_id, directory_node_id)
+            values(#{userId}, #{directoryNodeId})
+            on duplicate key update
+                accessed_at = current_timestamp(6)
+            """)
+    int createNoteAccessRecord(@Param("userId") Long userId, @Param("directoryNodeId") Long directoryNodeId);
+
+    @Select("""
+            select h.id, h.directory_node_id, dir.label as directory_node_label, h.accessed_at
+            from note_access_history h
+            join directory_nodes dir on dir.id = h.directory_node_id
+            where h.user_id = #{userId}
+                and dir.node_type = 'DETAIL'
+                and dir.deleted_at is null
+            order by h.accessed_at desc, h.id desc
+            limit 10
+            """)
+    List<GetRecentAccessedNoteHistoryRow> getRecentAccessedNoteHistory(@Param("userId") Long userId);
 }
