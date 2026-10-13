@@ -35,3 +35,6 @@ build/
 /uploads/
 
 .env
+
+### macOS ###
+.DS_Store

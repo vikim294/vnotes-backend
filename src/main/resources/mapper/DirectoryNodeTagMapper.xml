@@ -4,7 +4,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.vikim.demo.tag.DirectoryNodeTagMapper">
+<mapper namespace="com.vikim.vnotes.tag.DirectoryNodeTagMapper">
 
     <insert id="batchCreateDirectoryNodeTags">
         insert into directory_node_tags (directory_node_id, tag_id)
@@ -19,7 +19,7 @@
         where directory_node_id = #{id}
     </delete>
 
-    <select id="getTagsByDirectoryNodeId" resultType="com.vikim.demo.tag.TagRow">
+    <select id="getTagsByDirectoryNodeId" resultType="com.vikim.vnotes.tag.TagRow">
         select t.id, t.name, t.created_at
         from directory_node_tags dnt
         join tags t on t.id = dnt.tag_id

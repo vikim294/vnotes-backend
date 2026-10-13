@@ -4,7 +4,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.vikim.demo.note.DetailNodeMapper">
+<mapper namespace="com.vikim.vnotes.note.DetailNodeMapper">
 
     <select id="countActiveDetailNodesByIds" resultType="int">
         select count(*)
@@ -132,7 +132,7 @@
         )
     </select>
 
-    <select id="getExportDetailNodesByDirectoryNodeIds" resultType="com.vikim.demo.note.ExportDetailNodeVO">
+    <select id="getExportDetailNodesByDirectoryNodeIds" resultType="com.vikim.vnotes.note.ExportDetailNodeVO">
         select id as sourceId, parent_id as sourceParentId, directory_node_id as sourceDirectoryNodeId, label, x, y, image_width, image_height, content_type, mark_type, created_at, updated_at
         from detail_nodes
         where directory_node_id in
@@ -176,7 +176,7 @@
         </trim>
     </insert>
 
-    <select id="getImageNodesFromIds" resultType="com.vikim.demo.note.ImageDetailNodeResponse">
+    <select id="getImageNodesFromIds" resultType="com.vikim.vnotes.note.ImageDetailNodeResponse">
         WITH RECURSIVE tree AS (
             SELECT
                 id,
@@ -246,7 +246,7 @@
         </foreach>
     </delete>
 
-    <select id="findImageNodesByDirectoryNodesWithDetail" resultType="com.vikim.demo.note.FindImageNodesByDirectoryNodesWithDetailResponse">
+    <select id="findImageNodesByDirectoryNodesWithDetail" resultType="com.vikim.vnotes.note.FindImageNodesByDirectoryNodesWithDetailResponse">
         select id, image_url
         from detail_nodes
         where content_type = 'IMAGE' and

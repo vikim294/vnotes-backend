@@ -1,0 +1,15 @@
+package com.vikim.vnotes.admin.user;
+
+import java.time.LocalDateTime;
+
+public record GetUserWithRolesListRow(
+        Long id,
+        String email,
+        AdminUserStatus status,
+        Long roleId,
+        String roleName,
+        Boolean roleBuiltIn,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
+) {
+}
