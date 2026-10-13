@@ -20,7 +20,7 @@ public interface OutboxEventMapper {
             where status = 'PENDING'
                 or (
                     status = 'SENDING'
-                    and claimed_at < now() - interval 5 min
+                    and claimed_at < current_timestamp(6) - interval 5 minute
                 )
             order by created_at, id
             limit 10
