@@ -12,14 +12,14 @@ public class MessageProducer {
 
     private final RabbitTemplate rabbitTemplate;
 
-    public void sendUserRegisteredEvent(UserRegisteredEvent event) {
+    public void sendUserRegisteredEvent(UserRegisteredEvent event, Long claimVersion) {
         rabbitTemplate.convertAndSend(
                 RabbitMqConstants.USER_EXCHANGE,
                 RabbitMqConstants.USER_REGISTERED_ROUTING_KEY,
                 event,
                 // Publisher Confirm ack 时，回调会收到该 eventId
                 // 用于确认事件确实成功发给了 mq
-                new CorrelationData(event.eventId())
+                new CorrelationData(event.eventId() + ":" + claimVersion)
         );
     }
 }

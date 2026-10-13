@@ -29,17 +29,34 @@ public class RabbitMqConfig {
                             return;
                         }
 
-                        String eventId = correlationData.getId();
+                        String[] id = correlationData.getId().split(":");
+                        String eventId = id[0];
+                        Long claimVersion = Long.valueOf(id[1]);
+
+                        int affectedRows;
 
                         // ack 且没被 return 才能标记为 sent
                         if (ack && correlationData.getReturned() == null) {
                             log.info("RabbitMQ publish confirmed, eventId={}", eventId);
 
                             // 更新 outbox_events 状态为 sent
-                            outboxEventMapper.markSent(eventId);
+                            affectedRows = outboxEventMapper.markSent(eventId, claimVersion);
                         } else {
                             // nack 或 return
                             log.error("RabbitMQ publish failed, eventId={}, ack={}, cause={}", eventId, ack, cause);
+
+                            // 更新 outbox_events 状态为 pending
+                            affectedRows = outboxEventMapper.markPending(eventId, claimVersion);
+                        }
+
+                        // 过期回调被 claimVersion 正确拦截了
+                        if (affectedRows == 0) {
+                            // 记录日志即可
+                            log.warn(
+                                    "Ignored stale confirm, eventId={}, claimVersion={}",
+                                    eventId,
+                                    claimVersion
+                            );
                         }
                     }
             );

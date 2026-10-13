@@ -22,5 +22,9 @@ public class OutboxEvent {
 
     private Instant createdAt;
 
+    private Instant claimedAt;
+
+    private Long claimVersion;
+
     private Instant updatedAt;
 }
