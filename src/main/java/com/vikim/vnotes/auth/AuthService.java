@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.Optional;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +24,8 @@ public class AuthService {
 
     private static final Logger log =
             LoggerFactory.getLogger(AuthService.class);
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private Optional<User> findUserByEmail(String email) {
         return authMapper.findUserByEmail(email);
@@ -53,12 +55,8 @@ public class AuthService {
     }
 
     private String generateCode() {
-
-        Random random = new Random();
-
-        int code = random.nextInt(10000);
-
-        return String.format("%04d", code);
+        int code = SECURE_RANDOM.nextInt(1_000_000);
+        return String.format("%06d", code);
     }
 
     // 生成验证码 + 发送
@@ -66,10 +64,10 @@ public class AuthService {
         Optional<User> optionalUser = findUserByEmail(request.email());
 
         optionalUser.ifPresent(user -> {
-            // 生成四位随机验证码
+            // 使用 SecureRandom 生成六位随机验证码
             String verificationCode = generateCode();
 
-            // 存 redis
+            // 存 redis，60 秒后过期删除
             loginVerificationCodeService.saveVerificationCode(user.getId(), verificationCode);
 
             // 发送到用户邮箱
@@ -90,7 +88,7 @@ public class AuthService {
     public LoginResponse loginByEmailAndVerificationCode(LoginByEmailAndVerificationCodeRequest request) {
         User user = findUserByEmail(request.email()).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_EMAIL_OR_VERIFICATION_CODE));
 
-        // 校验验证码
+        // 需要原子地“判断已失败次数、校验验证码、失败时增加失败次数”
         loginVerificationCodeService.verify(user.getId(), request.verificationCode());
 
         // 生成并返回 token

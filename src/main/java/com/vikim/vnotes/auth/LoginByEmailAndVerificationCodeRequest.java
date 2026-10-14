@@ -10,7 +10,7 @@ public record LoginByEmailAndVerificationCodeRequest(
         String email,
 
         @NotBlank(message = "验证码不能为空")
-        @Pattern(regexp = "\\d{4}", message = "验证码格式不正确")
+        @Pattern(regexp = "\\d{6}", message = "验证码格式不正确")
         String verificationCode
 ) {
 }
