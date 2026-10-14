@@ -342,6 +342,12 @@ public enum ErrorCode {
             "笔记已被修改，请刷新后重试"
     ),
 
+    INVALID_OAUTH_STATE(
+            40052,
+            HttpStatus.UNAUTHORIZED,
+            "无效的 oauth state"
+    ),
+
     INTERNAL_ERROR(
             50001,
             HttpStatus.INTERNAL_SERVER_ERROR,
