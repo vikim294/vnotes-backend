@@ -33,7 +33,8 @@ public interface ClientUserMapper {
 
     @Update("""
             update users
-            set status = 'ACTIVE'
+            set status = 'ACTIVE',
+                token_version = token_version + 1
             where id = #{userId}
                 and status = 'DISABLED'
             """)

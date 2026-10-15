@@ -1,26 +1,27 @@
 package com.vikim.vnotes.admin.clientuser;
 
-import com.vikim.vnotes.admin.audit.AdminAuditAction;
-import com.vikim.vnotes.admin.audit.AdminAuditService;
-import com.vikim.vnotes.common.BusinessException;
-import com.vikim.vnotes.common.ErrorCode;
+import com.vikim.vnotes.auth.ClientUserAuthStateService;
+import com.vikim.vnotes.auth.UserAuthState;
 import com.vikim.vnotes.objectStorage.ObjectStorageService;
-import com.vikim.vnotes.user.UserStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.QueryTimeoutException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ClientUserService {
 
     private final ClientUserMapper clientUserMapper;
     private final ObjectStorageService objectStorageService;
-    private final AdminAuditService adminAuditService;
+    private final ClientUserTransactionService clientUserTransactionService;
+    private final ClientUserAuthStateService clientUserAuthStateService;
 
     @PreAuthorize("hasAuthority('client:user:read')")
     public List<GetClientUserResponse> getClientUserList(){
@@ -41,37 +42,20 @@ public class ClientUserService {
                 .toList();
     }
 
-    @PreAuthorize("hasAuthority('client:user:enable_and_disable')")
-    @Transactional
     public void enableOrDisableClientUser(
             Long operatorId,
             EnableOrDisableClientUserRequest request
     ){
-        int affectedRows = 0;
-
-        if(request.status() == UserStatus.DISABLED) {
-            affectedRows = clientUserMapper.disableClientUser(request.userId());
-        }
-        else {
-            affectedRows = clientUserMapper.enableClientUser(request.userId());
-        }
-
-        if(affectedRows != 1) {
-            // 说明 where 匹配到 0 行
-
-            // 如果用户不存在
-            if(!clientUserMapper.existsById(request.userId())) {
-                throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        UserAuthState state = clientUserTransactionService.enableOrDisableClientUser(operatorId, request);
+        if(state != null) {
+            try {
+                // 更新 redis 缓存
+                clientUserAuthStateService.setUserAuthState(request.userId(), state);
+            } catch (RedisConnectionFailureException | QueryTimeoutException e) {
+                // redis 故障
+                log.error("Failed to update client auth state cache, userId={}",
+                        request.userId(), e);
             }
-
-            // 如果用户是存在的，说明该操作是重复启用/禁用，无需记录日志
-            return;
         }
-
-        adminAuditService.createAuditLog(
-                operatorId,
-                request.status() == UserStatus.ACTIVE ? AdminAuditAction.ENABLE_CLIENT_USER : AdminAuditAction.DISABLE_CLIENT_USER,
-                (request.status() == UserStatus.ACTIVE ? "启用" : "禁用") + "客户端用户：" + request.userId()
-        );
     }
 }
